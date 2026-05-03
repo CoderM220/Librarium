@@ -1,106 +1,72 @@
-﻿using System.Net;
-using System.Net.Mail;
+﻿using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 
 namespace Librarium.Services
 {
     public class EmailService
     {
         private readonly IConfiguration _config;
+        private readonly HttpClient _http;
 
         public EmailService(IConfiguration config)
         {
             _config = config;
+            _http = new HttpClient();
         }
 
-        private SmtpClient GetClient()
+        private async Task SendEmail(string to, string subject, string html)
         {
-            return new SmtpClient(_config["SMTP_HOST"])
+            Console.WriteLine("=== BREVO EMAIL FUNCTION CALLED ===");
+            var apiKey = _config["BREVO_API_KEY"];
+            var fromEmail = _config["FROM_EMAIL"];
+
+            if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(fromEmail))
             {
-                Port = int.Parse(_config["SMTP_PORT"]),
-                Credentials = new NetworkCredential(
-                    _config["SMTP_EMAIL"],
-                    _config["SMTP_PASSWORD"]
-                ),
-                EnableSsl = true
-            };
-        }
-
-        private MailMessage CreateMail(string to, string subject, string body)
-        {
-            var mail = new MailMessage
-            {
-                From = new MailAddress(_config["SMTP_EMAIL"], "Librarium"),
-                Subject = subject,
-                Body = body,
-                IsBodyHtml = false
-            };
-
-            mail.To.Add(to);
-            return mail;
-        }
-
-        // ================= OTP =================
-        public async Task SendOtpAsync(string toEmail, string otp)
-        {
-            Console.WriteLine("=== EMAIL FUNCTION CALLED ===");
-            Console.WriteLine($"Sending OTP to: {toEmail}");
-
-            try
-            {
-                var client = GetClient();
-                var mail = CreateMail(toEmail, "Your Librarium OTP Code", $"Your OTP is: {otp}");
-
-                await client.SendMailAsync(mail);
-
-                Console.WriteLine("✅ EMAIL SENT SUCCESSFULLY");
+                Console.WriteLine("❌ Missing BREVO env variables");
+                return;
             }
-            catch (Exception ex)
+
+            var req = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email");
+            req.Headers.Add("api-key", apiKey);
+
+            var payload = new
             {
-                Console.WriteLine("❌ EMAIL ERROR: " + ex.ToString());
-            }
+                sender = new { email = fromEmail, name = "Librarium" },
+                to = new[] { new { email = to } },
+                subject = subject,
+                htmlContent = html
+            };
+
+            req.Content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            var res = await _http.SendAsync(req);
+            var body = await res.Content.ReadAsStringAsync();
+
+            Console.WriteLine($"BREVO STATUS: {res.StatusCode}");
+            Console.WriteLine($"BREVO RESPONSE: {body}");
         }
 
-        public async Task SendAdminOtpAsync(string email, string otp)
-        {
-            await SendOtpAsync(email, otp);
-        }
+        public Task SendOtpAsync(string email, string otp)
+            => SendEmail(email, "Your OTP Code", $"<h2>Your OTP is: {otp}</h2>");
 
-        // ================= REMINDER =================
-        public async Task SendDueReminderAsync(string email, string name, string bookTitle, DateTime dueDate)
-        {
-            var client = GetClient();
-            var body = $"Hi {name},\n\nYour book \"{bookTitle}\" is due on {dueDate:dd MMM yyyy}. Please return it on time.";
-            var mail = CreateMail(email, "📚 Book Due Reminder", body);
-            await client.SendMailAsync(mail);
-        }
+        public Task SendAdminOtpAsync(string email, string otp)
+            => SendOtpAsync(email, otp);
 
-        // ================= BOOKING EXPIRED =================
-        public async Task SendBookingExpiredAsync(string email, string name, string bookTitle)
-        {
-            var client = GetClient();
-            var body = $"Hi {name},\n\nYour booking for \"{bookTitle}\" has expired.";
-            var mail = CreateMail(email, "⏳ Booking Expired", body);
-            await client.SendMailAsync(mail);
-        }
+        public Task SendDueReminderAsync(string email, string name, string bookTitle, DateTime dueDate)
+            => SendEmail(email, "Book Due Reminder",
+                $"Hi {name},<br>Your book <b>{bookTitle}</b> is due on {dueDate:dd MMM yyyy}.");
 
-        // ================= BOOKING STATUS =================
-        public async Task SendBookingStatusAsync(string email, string name, string bookTitle, string status, string? message)
-        {
-            var client = GetClient();
+        public Task SendBookingExpiredAsync(string email, string name, string bookTitle)
+            => SendEmail(email, "Booking Expired",
+                $"Hi {name},<br>Your booking for <b>{bookTitle}</b> has expired.");
 
-            var safeMessage = string.IsNullOrEmpty(message) ? "" : message;
-
-            var body = $"Hi {name},\n\nYour booking for \"{bookTitle}\" is {status}.\n\n{safeMessage}";
-
-            var mail = CreateMail(email, "📖 Booking Status Update", body);
-
-            await client.SendMailAsync(mail);
-        }
-
-        // ================= EMAIL VALIDATION =================
-        public Task<bool> IsEmailRealAsync(string email)
-        {
-            return Task.FromResult(true);
-        }
+        public Task SendBookingStatusAsync(string email, string name, string bookTitle, string status, string? note)
+            => SendEmail(email, "Booking Update",
+                $"Hi {name},<br>Your booking for <b>{bookTitle}</b> is <b>{status}</b>.<br>{note}");
     }
 }
