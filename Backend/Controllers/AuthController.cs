@@ -80,7 +80,6 @@ namespace Librarium.Controllers
         public IActionResult Register() => View();
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterModel model)
         {
             if (!ModelState.IsValid)
