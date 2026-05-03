@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        webView.loadUrl("http://10.43.216.250:5059/Auth/StudentLogin")
+        webView.loadUrl("https://10.43.216.250:5059/Auth/StudentLogin")
 
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
