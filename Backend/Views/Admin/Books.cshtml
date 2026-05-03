@@ -1,0 +1,489 @@
+﻿@model IEnumerable<Librarium.Models.Book>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewBag.Title = "Books";
+    ViewBag.PageName = "Books";
+}
+
+<div class="panel">
+    @Html.AntiForgeryToken()
+    <div class="panel-header">
+        <span class="panel-title">📚 All Books</span>
+        <a href="/Admin/AddBook" class="btn btn-primary">+ Add Book</a>
+    </div>
+
+    <div style="display:flex;gap:10px;padding:0 0 16px 0;align-items:flex-start;flex-wrap:wrap;">
+        <div style="position:relative;width:280px;">
+            <input id="searchInput" class="form-input" placeholder="Search title or author…"
+                   value="@ViewBag.Search" autocomplete="off" style="width:100%;" />
+            <div id="suggestions" style="
+                display:none;position:absolute;top:100%;left:0;right:0;
+                background:var(--cream);border:1px solid var(--border);
+                border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.12);
+                z-index:999;max-height:320px;overflow-y:auto;margin-top:4px;">
+            </div>
+        </div>
+        <form method="get" action="/Admin/Books" id="filterForm"
+              style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <input type="hidden" name="search" id="filterSearch" value="@ViewBag.Search" />
+            <select class="form-input" name="filter" style="max-width:160px;">
+                @if (ViewBag.Filter == "available")
+                {
+                    <option value="all">All Status</option>
+                    <option value="available" selected>Available</option>
+                    <option value="borrowed">Borrowed</option>
+                }
+                else if (ViewBag.Filter == "borrowed")
+                {
+                    <option value="all">All Status</option>
+                    <option value="available">Available</option>
+                    <option value="borrowed" selected>Borrowed</option>
+                }
+                else
+                {
+                    <option value="all" selected>All Status</option>
+                    <option value="available">Available</option>
+                    <option value="borrowed">Borrowed</option>
+                }
+            </select>
+            <button type="submit" class="btn btn-outline"
+                    onclick="document.getElementById('filterSearch').value=document.getElementById('searchInput').value">
+                Filter
+            </button>
+            @if (!string.IsNullOrEmpty(ViewBag.Search as string) || (ViewBag.Filter as string) != "all")
+            {
+                <a href="/Admin/Books" class="btn btn-outline">Clear</a>
+            }
+        </form>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Book</th>
+               @* <th>Genre</th> *@
+                <th>ISBN</th>
+                <th>Year</th>
+                <th>Status</th>
+                <th>Copies</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var b in Model)
+            {
+                <tr>
+                    <td>
+                        <div class="book-cell">
+                            <div class="book-thumb" style="padding:0;overflow:hidden;">
+                                @if (!string.IsNullOrEmpty(b.CoverUrl))
+                                {
+                                    <img src="@b.CoverUrl" style="width:100%;height:100%;object-fit:cover;" />
+                                }
+                                else
+                                {
+
+                                    @b.Emoji
+                                }
+                            </div>
+                            <div>
+                                <span class="book-t">@b.Title</span>
+                                <span class="book-a">@b.Author</span>
+                            </div>
+                        </div>
+                    </td>
+                    @*<td><span class="genre-tag">@b.Genre</span></td>*@
+                    <td>@b.ISBN</td>
+                    <td>@b.Year</td>
+                    <td>
+                        @if (b.AvailableCopies > 0)
+                        {
+                            <span class="badge b-avail">Available</span>
+                        }
+                        else
+                        {
+                            <span class="badge b-borrow">All Borrowed</span>
+                        }
+                    </td>
+                    <td class="copies-cell">@b.AvailableCopies / @b.Copies</td>
+                    <td style="display:flex;gap:6px;flex-wrap:wrap;">
+                        <button onclick="viewDetail(@b.Id)"
+                                class="btn btn-outline"
+                                style="font-size:12px;padding:4px 10px;">
+                            🔍 Details
+                        </button>
+                        <a href="/Admin/EditBook/@b.Id"
+                           class="btn btn-outline"
+                           style="font-size:12px;padding:4px 10px;">✏️ Edit</a>
+                        <button data-delete-id="@b.Id"
+                                onclick="deleteBook(@b.Id, '@b.Title.Replace("'", "\\'")', @b.Copies, @b.AvailableCopies)"
+                                class="btn"
+                                style="font-size:12px;padding:4px 10px;background:var(--burgundy);color:#fff;">
+                            🗑️ Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- DELETE MODAL -->
+<div id="deleteModal" style="
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,0.45);z-index:1001;
+    align-items:center;justify-content:center;">
+    <div style="
+        background:var(--cream);border-radius:16px;
+        padding:28px 32px;width:420px;max-width:95vw;
+        box-shadow:0 8px 40px rgba(0,0,0,0.25);position:relative;">
+        <button onclick="closeDeleteModal()" style="
+            position:absolute;top:14px;right:16px;
+            background:none;border:none;font-size:20px;
+            cursor:pointer;color:var(--text-muted);">
+            ✕
+        </button>
+
+        <div style="font-size:22px;font-weight:700;color:var(--text-primary);margin-bottom:6px;">
+            🗑️ Remove Copies
+        </div>
+        <div id="deleteModalBookTitle" style="font-size:14px;color:var(--text-muted);margin-bottom:20px;"></div>
+
+        <div style="background:var(--bg-secondary);border-radius:10px;padding:14px 16px;margin-bottom:20px;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+                <span style="color:var(--text-muted);">Total copies</span>
+                <span id="deleteModalTotal" style="font-weight:600;"></span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;">
+                <span style="color:var(--text-muted);">Currently borrowed</span>
+                <span id="deleteModalBorrowed" style="font-weight:600;color:var(--burgundy);"></span>
+            </div>
+        </div>
+
+        <label style="font-size:13px;font-weight:600;color:var(--text-primary);display:block;margin-bottom:8px;">
+            How many copies to remove?
+        </label>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <input type="number" id="removeCountInput" min="1"
+                   style="width:100px;padding:8px 12px;border:1px solid var(--border);
+                          border-radius:8px;font-size:15px;background:var(--cream);
+                          color:var(--text-primary);text-align:center;" />
+            <span id="deleteModalMax" style="font-size:12px;color:var(--text-muted);"></span>
+        </div>
+        <div id="deleteModalWarning" style="font-size:12px;color:var(--burgundy);min-height:18px;margin-bottom:16px;"></div>
+
+        <div style="display:flex;gap:10px;">
+            <button onclick="confirmDelete()" id="confirmDeleteBtn"
+                    class="btn"
+                    style="background:var(--burgundy);color:#fff;font-size:13px;flex:1;">
+                🗑️ Remove
+            </button>
+            <button onclick="closeDeleteModal()" class="btn btn-outline" style="font-size:13px;">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+<div id="detailModal" style="
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,0.45);z-index:1000;
+    align-items:center;justify-content:center;">
+    <div style="
+        background:var(--cream);border-radius:16px;
+        padding:28px 32px;width:480px;max-width:95vw;
+        box-shadow:0 8px 40px rgba(0,0,0,0.2);position:relative;">
+        <button onclick="closeModal()" style="
+            position:absolute;top:14px;right:16px;
+            background:none;border:none;font-size:20px;
+            cursor:pointer;color:var(--text-muted);">
+            ✕
+        </button>
+        <div id="modalContent"></div>
+    </div>
+</div>
+
+<script>
+    // ── AUTOCOMPLETE ──
+    let searchTimer;
+    const inp = document.getElementById('searchInput');
+    const sug = document.getElementById('suggestions');
+
+    inp.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        const q = inp.value.trim();
+        if (q.length < 2) { sug.style.display = 'none'; return; }
+        searchTimer = setTimeout(() => {
+            fetch(`/Admin/BookSearch?q=${encodeURIComponent(q)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.length) { sug.style.display = 'none'; return; }
+                    sug.innerHTML = data.map(b => `
+                        <div class="sug-item" data-id="${b.id}"
+                             style="padding:10px 14px;cursor:pointer;
+                                    border-bottom:1px solid var(--border);
+                                    display:flex;align-items:center;gap:10px;">
+                            <span style="font-size:20px;">${b.emoji}</span>
+                            <div style="flex:1;">
+                                <div style="font-size:13px;font-weight:500;color:var(--text-primary);">
+                                    ${b.title}
+                                </div>
+                                <div style="font-size:11px;color:var(--text-muted);">
+                                    ${b.author}
+                                    ${b.shelfCode ? `· 📍 ${b.shelfType === 'rack' ? 'Rack' : 'Almirah'} ${b.shelfCode}` : '· No shelf assigned'}
+                                </div>
+                            </div>
+                            <span style="font-size:10px;padding:2px 8px;border-radius:10px;
+                                background:${b.status === 'available' ? 'rgba(107,142,107,0.15)' : 'rgba(139,60,60,0.15)'};
+                                color:${b.status === 'available' ? 'var(--sage)' : 'var(--burgundy)'};">
+                                ${b.status}
+                            </span>
+                        </div>`).join('');
+                    sug.style.display = 'block';
+
+                    sug.querySelectorAll('.sug-item').forEach(el => {
+                        el.addEventListener('mouseenter', () => el.style.background = 'var(--bg-secondary)');
+                        el.addEventListener('mouseleave', () => el.style.background = '');
+                        el.addEventListener('click', () => {
+                            viewDetail(parseInt(el.dataset.id));
+                            sug.style.display = 'none';
+                        });
+                    });
+                });
+        }, 250);
+    });
+
+    document.addEventListener('click', e => {
+        if (!inp.contains(e.target) && !sug.contains(e.target))
+            sug.style.display = 'none';
+    });
+
+    // ── VIEW DETAIL MODAL ──
+    function viewDetail(id) {
+        fetch(`/Admin/BookDetail?id=${id}`)
+            .then(r => r.json())
+            .then(b => {
+                const shelfInfo = b.shelfCode
+                    ? `<span style="
+                        display:inline-flex;align-items:center;gap:4px;
+                        padding:3px 10px;border-radius:20px;font-size:12px;
+                        background:rgba(184,142,74,0.15);color:var(--amber);
+                        border:1px solid var(--amber);">
+                        📍 ${b.shelfType === 'rack' ? 'Rack' : 'Almirah'} ${b.shelfCode}
+                      </span>`
+                    : `<span style="
+                        display:inline-flex;align-items:center;gap:4px;
+                        padding:3px 10px;border-radius:20px;font-size:12px;
+                        background:rgba(0,0,0,0.06);color:var(--text-muted);
+                        border:1px solid var(--border);">
+                        No shelf assigned
+                      </span>`;
+
+                document.getElementById('modalContent').innerHTML = `
+                    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
+                        <div style="font-size:48px;">${b.emoji}</div>
+                        <div>
+                            <div style="font-size:18px;font-weight:700;color:var(--text-primary);">
+                                ${b.title}
+                            </div>
+                            <div style="font-size:13px;color:var(--text-muted);margin-top:2px;">
+                                ${b.author}
+                            </div>
+                            <div style="margin-top:6px;">${shelfInfo}</div>
+                        </div>
+                    </div>
+                    @*<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+                        <div style="background:var(--bg-secondary);border-radius:8px;padding:10px 14px;">
+                            <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">GENRE</div>
+                            <div style="font-size:13px;font-weight:500;">${b.genre || '—'}</div>
+                        </div>*@
+                        <div style="background:var(--bg-secondary);border-radius:8px;padding:10px 14px;">
+                            <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">YEAR</div>
+                            <div style="font-size:13px;font-weight:500;">${b.year || '—'}</div>
+                        </div>
+                        <div style="background:var(--bg-secondary);border-radius:8px;padding:10px 14px;">
+                            <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">ISBN</div>
+                            <div style="font-size:13px;font-weight:500;">${b.isbn || '—'}</div>
+                        </div>
+                        <div style="background:var(--bg-secondary);border-radius:8px;padding:10px 14px;">
+                            <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">COPIES</div>
+                            <div style="font-size:13px;font-weight:500;">${b.availableCopies} / ${b.copies}</div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:14px;">
+                        <span style="padding:3px 12px;border-radius:20px;font-size:12px;font-weight:500;
+                            background:${b.status === 'available' ? 'rgba(107,142,107,0.15)' : 'rgba(139,60,60,0.15)'};
+                            color:${b.status === 'available' ? 'var(--sage)' : 'var(--burgundy)'};">
+                            ${b.status === 'available' ? '✅ Available' : '📤 Borrowed'}
+                        </span>
+                    </div>
+                    ${b.description ? `
+                    <div style="font-size:12px;color:var(--text-muted);
+                                border-top:1px solid var(--border);padding-top:12px;">
+                        ${b.description}
+                    </div>` : ''}
+                    <div style="display:flex;gap:8px;margin-top:16px;">
+                        <a href="/Admin/EditBook/${b.id}" class="btn btn-outline"
+                           style="font-size:13px;">✏️ Edit Book</a>
+                        <button onclick="closeModal()" class="btn btn-outline"
+                                style="font-size:13px;">Close</button>
+                    </div>`;
+
+                document.getElementById('detailModal').style.display = 'flex';
+            });
+    }
+
+    function closeModal() {
+        document.getElementById('detailModal').style.display = 'none';
+    }
+
+    document.getElementById('detailModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+    @*// ── DELETE ──
+    function deleteBook(id, title) {
+        if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+        const form = new FormData();
+        form.append('id', id);
+
+        fetch('/Admin/DeleteBook/' + id, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': token },
+            body: form
+        })
+        .then(r => {
+            if (!r.ok) throw new Error('Server returned ' + r.status);
+            return r.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const btn = document.querySelector(`button[onclick*="deleteBook(${id},"]`);
+                if (btn) btn.closest('tr').remove();
+                else location.reload();
+            } else {
+                alert(data.message || 'Could not delete book.');
+            }
+        })
+        .catch(err => {
+            console.error('Delete failed:', err);
+            alert('Delete failed. Check the console for details.');
+        });
+    }*@
+        // ── DELETE MODAL ──
+    let _deleteId = null;
+    let _deleteMax = 0;
+
+    function deleteBook(id, title, totalCopies, availableCopies) {
+        _deleteId = id;
+        _deleteMax = availableCopies;
+
+        const borrowed = totalCopies - availableCopies;
+
+        document.getElementById('deleteModalBookTitle').textContent = title;
+        document.getElementById('deleteModalTotal').textContent = totalCopies;
+        document.getElementById('deleteModalBorrowed').textContent = borrowed;
+        document.getElementById('deleteModalMax').textContent =
+            `Max you can remove: ${availableCopies}`;
+        document.getElementById('removeCountInput').value = Math.max(1, availableCopies);
+        document.getElementById('removeCountInput').max = availableCopies;
+        document.getElementById('deleteModalWarning').textContent = '';
+
+        // If removing all = full delete warning
+        if (availableCopies === totalCopies) {
+            document.getElementById('deleteModalWarning').textContent =
+                '⚠️ Removing all copies will permanently delete this book.';
+        }
+
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    document.getElementById('removeCountInput').addEventListener('input', function() {
+        const val = parseInt(this.value) || 0;
+        const warn = document.getElementById('deleteModalWarning');
+        if (val > _deleteMax) {
+            warn.textContent = `⚠️ Max removable is ${_deleteMax} (others are borrowed).`;
+            document.getElementById('confirmDeleteBtn').disabled = true;
+        } else if (val === _deleteMax) {
+            warn.textContent = val > 0 && document.getElementById('deleteModalTotal').textContent == val
+                ? '⚠️ Removing all copies will permanently delete this book.'
+                : '';
+            document.getElementById('confirmDeleteBtn').disabled = false;
+        } else {
+            warn.textContent = '';
+            document.getElementById('confirmDeleteBtn').disabled = false;
+        }
+    });
+
+    function confirmDelete() {
+        const removeCount = parseInt(document.getElementById('removeCountInput').value) || 0;
+        if (removeCount < 1) {
+            document.getElementById('deleteModalWarning').textContent = 'Please enter at least 1.';
+            return;
+        }
+        if (removeCount > _deleteMax) {
+            document.getElementById('deleteModalWarning').textContent =
+                `Max removable is ${_deleteMax}.`;
+            return;
+        }
+
+           const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+    const form = new FormData();
+    form.append('__RequestVerificationToken', token);   // ← ADD token to body
+    form.append('id', _deleteId);
+    form.append('removeCount', removeCount);
+
+    fetch('/Admin/ReduceCopies', {
+        method: 'POST',
+        body: form   // no headers needed
+    })
+        .then(r => {
+            if (!r.ok) throw new Error('Server returned ' + r.status);
+            return r.json();
+        })
+        .then(data => {
+            if (data.success) {
+                closeDeleteModal();
+                if (data.deleted) {
+                    // Remove row from table
+                    const btn = document.querySelector(`button[data-delete-id="${_deleteId}"]`);
+                    if (btn) btn.closest('tr').remove();
+                    else location.reload();
+                } else {
+                    // Update copies count in the row live
+                    const btn = document.querySelector(`button[data-delete-id="${_deleteId}"]`);
+                    if (btn) {
+                        const row = btn.closest('tr');
+                        const copiesCell = row.querySelector('.copies-cell');
+                        if (copiesCell) copiesCell.textContent = `${data.newAvailable} / ${data.newCopies}`;
+                        // Update status badge
+                        const badge = row.querySelector('.badge');
+                        if (badge) {
+                            if (data.newAvailable > 0) {
+                                badge.textContent = 'Available';
+                                badge.className = 'badge b-avail';
+                            } else {
+                                badge.textContent = 'All Borrowed';
+                                badge.className = 'badge b-borrow';
+                            }
+                        }
+                    } else location.reload();
+                }
+            } else {
+                document.getElementById('deleteModalWarning').textContent =
+                    data.message || 'Could not remove copies.';
+            }
+        })
+        .catch(err => {
+            console.error('Delete failed:', err);
+            document.getElementById('deleteModalWarning').textContent =
+                'Request failed. Check console.';
+        });
+    }
+</script>

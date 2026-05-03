@@ -1,0 +1,87 @@
+﻿@using Librarium.Models
+@{
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewBag.Title = "Dashboard";
+    ViewBag.PageName = "Dashboard";
+    var vm = Model as Librarium.Controllers.StudentDashboardViewModel;
+    var activeBorrows = vm?.RecentBorrows?.Where(r => r.Status == "active" || r.Status == "overdue").ToList() ?? new();
+    var recentBorrows = vm?.RecentBorrows ?? new();
+}
+@model Librarium.Controllers.StudentDashboardViewModel
+
+<div class="stats-row">
+    <a href="/Student/MyBorrows" class="stat-card sc-amber" style="text-decoration:none;display:block;cursor:pointer;">
+        <div class="stat-ico">📚</div>
+        <div class="stat-val">@vm?.ActiveBorrows</div>
+        <div class="stat-lbl">Active Borrows</div>
+    </a>
+    <a href="/Student/MyBorrows" class="stat-card sc-burg" style="text-decoration:none;display:block;cursor:pointer;">
+        <div class="stat-ico">↩️</div>
+        <div class="stat-val">@vm?.ReturnedCount</div>
+        <div class="stat-lbl">Books Returned</div>
+    </a>
+    <a href="/Student/MyBorrows" class="stat-card sc-sage" style="text-decoration:none;display:block;cursor:pointer;">
+        <div class="stat-ico">@(vm?.HasOverdue == true ? "⚠️" : "✅")</div>
+        <div class="stat-val">@(vm?.HasOverdue == true ? "Yes" : "No")</div>
+        <div class="stat-lbl">Overdue Books</div>
+    </a>
+</div>
+
+<div class="g2">
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title">📋 Recent Borrows</span>
+            <a href="/Student/MyBorrows" class="btn btn-outline">View All</a>
+        </div>
+        <table>
+            <thead><tr><th>Book</th><th>Issued</th><th>Due Date</th><th>Status</th></tr></thead>
+            <tbody>
+                @foreach (var r in recentBorrows)
+                {
+                    var diff = (r.DueDate.Date - DateTime.Today).Days;
+                    var color = diff < 0 ? "var(--burgundy)" : diff <= 2 ? "var(--amber)" : "var(--sage)";
+                    var label = diff < 0 ? $"{Math.Abs(diff)}d overdue" : diff == 0 ? "Today" : $"{diff}d left";
+                    <tr>
+                        <td><strong>@r.BookTitle</strong></td>
+                        <td style="color:#888;font-size:12px;">@r.IssuedDate.ToString("MMM d, yyyy")</td>
+                        <td style="font-size:12px;">@r.DueDate.ToString("MMM d, yyyy")</td>
+                        <td>
+                            @if (r.Status == "returned")
+                            {
+                                <span class="badge b-avail">Returned</span>
+                            }
+                            else if (r.Status == "overdue")
+                            {
+
+                                <span class="badge" style="background:rgba(122,32,32,0.1);color:var(--burgundy);">⚠️ Overdue</span>
+                            }
+                            else
+                            {
+
+                                <span class="badge b-borrow" style="color:@color;">@label</span>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (!recentBorrows.Any())
+                {
+                    <tr><td colspan="4" style="text-align:center;color:#aaa;padding:30px;">No borrows yet. Visit the library to get started!</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel" style="padding:22px;">
+        <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;margin-bottom:14px;">📖 How to Borrow</div>
+        <div style="font-size:13px;color:#5a4a3a;line-height:1.8;">
+            1. Browse or search for a book<br>
+            2. Check it shows <strong style="color:var(--sage)">Available</strong><br>
+            3. Visit the library desk with your Library Card<br>
+            4. Books can be borrowed for <strong>14 days</strong><br>
+            5. Renewals available at the front desk
+        </div>
+        <div style="margin-top:20px;">
+            <a href="/Student/Books" class="btn" style="background:var(--blue);color:#fff;">Browse Books →</a>
+        </div>
+    </div>
+</div>

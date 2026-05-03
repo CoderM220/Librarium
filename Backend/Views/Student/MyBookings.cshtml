@@ -1,0 +1,83 @@
+﻿@model List<Librarium.Models.BookingRequest>
+@{
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewBag.Title = "My Bookings";
+    ViewBag.PageName = "MyBookings";
+}
+<style>
+    .booking-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 14px;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border: 1px solid var(--paper);
+    }
+
+    .booking-title {
+        font-weight: 600;
+        font-size: 15px;
+        color: var(--ink);
+    }
+
+    .booking-date {
+        font-size: 12px;
+        color: var(--dust);
+        margin-top: 4px;
+    }
+
+    .booking-note {
+        font-size: 12px;
+        color: var(--dust);
+        margin-top: 4px;
+    }
+
+    body.dark .booking-card {
+        background: #1e1a16;
+        border-color: #2e2720;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+    }
+</style>
+
+<div style="max-width:700px;margin:0 auto;padding:20px;">
+    <h3 style="margin-bottom:20px;">📋 My Booking Requests</h3>
+    @if (!Model.Any())
+    {
+        <div style="text-align:center;color:#aaa;padding:60px 0;">
+            No booking requests yet. <a href="/Student/Books">Browse books</a>
+        </div>
+    }
+    else
+    {
+        @foreach (var r in Model)
+        {
+            <div class="booking-card">
+                <div>
+                    <div class="booking-title">@r.BookTitle</div>
+                    <div class="booking-date">Requested: @r.RequestedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</div>
+                    @if (!string.IsNullOrEmpty(r.AdminNote))
+                    {
+                        <div class="booking-note">Note: @r.AdminNote</div>
+                    }
+                </div>
+                <div>
+                    @if (r.Status == "pending")
+                    {
+                        <span style="background:#fff3cd;color:#856404;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">⏳ Pending</span>
+                    }
+                    else if (r.Status == "approved")
+                    {
+                        <span style="background:#d1e7dd;color:#0a3622;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">✅ Approved</span>
+                    }
+                    else
+                    {
+                        <span style="background:#f8d7da;color:#842029;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">❌ Rejected</span>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>

@@ -1,0 +1,451 @@
+﻿@{
+    Layout = null; ViewBag.Title = "Student Login";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Librarium — Student Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link href="~/css/librarium-shared.css" rel="stylesheet" />
+    <style>
+        /* ── LOADING SCREEN ── */
+        #loadingScreen {
+            position: fixed;
+            inset: 0;
+            background: #1a1209;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            z-index: 9999;
+            transition: opacity 0.6s ease;
+        }
+
+            #loadingScreen.hide {
+                opacity: 0;
+                pointer-events: none;
+            }
+
+        .load-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            color: #e8a84a;
+            letter-spacing: 0.02em;
+        }
+
+        .load-tagline {
+            font-size: 12px;
+            color: #b8ac9a;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-top: -18px;
+        }
+
+        .book-wrap {
+            width: 80px;
+            height: 60px;
+            position: relative;
+        }
+
+        .book-pages {
+            position: absolute;
+            left: 4px;
+            top: 2px;
+            width: 72px;
+            height: 56px;
+            background: #faf7f2;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 5px;
+            padding: 8px;
+        }
+
+        .book-line {
+            height: 2px;
+            background: #ede8de;
+            border-radius: 1px;
+        }
+
+        .book-cover-left {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 38px;
+            height: 60px;
+            background: #c8842a;
+            border-radius: 4px 0 0 4px;
+            transform-origin: right center;
+            animation: openLeft 0.8s ease-in-out infinite alternate;
+        }
+
+        .book-spine {
+            position: absolute;
+            left: 38px;
+            top: 0;
+            width: 4px;
+            height: 60px;
+            background: #854F0B;
+        }
+
+        .book-cover-right {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 38px;
+            height: 60px;
+            background: #c8842a;
+            border-radius: 0 4px 4px 0;
+            transform-origin: left center;
+            animation: openRight 0.8s ease-in-out infinite alternate;
+        }
+
+        @@keyframes openLeft {
+            from {
+                transform: perspective(200px) rotateY(0deg);
+            }
+
+            to {
+                transform: perspective(200px) rotateY(-45deg);
+            }
+        }
+
+        @@keyframes openRight {
+            from {
+                transform: perspective(200px) rotateY(0deg);
+            }
+
+            to {
+                transform: perspective(200px) rotateY(45deg);
+            }
+        }
+
+        .load-text {
+            font-size: 13px;
+            color: #b8ac9a;
+            letter-spacing: 0.05em;
+        }
+
+        .dot {
+            animation: dot 1.2s infinite;
+        }
+
+            .dot:nth-child(2) {
+                animation-delay: 0.2s;
+            }
+
+            .dot:nth-child(3) {
+                animation-delay: 0.4s;
+            }
+
+        @@keyframes dot {
+            0%, 80%, 100% {
+                opacity: 0;
+            }
+
+            40% {
+                opacity: 1;
+            }
+        }
+
+        /* ── INTRO SCREEN ── */
+        #introScreen {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 30% 50%, #3a2010 0%, #1a1209 60%, #0d0905 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2.5rem 1.5rem;
+            z-index: 9998;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.7s ease;
+        }
+
+            #introScreen.show {
+                opacity: 1;
+                pointer-events: all;
+            }
+
+            #introScreen.hide {
+                opacity: 0;
+                pointer-events: none;
+            }
+
+        .intro-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: #e8a84a;
+            text-align: center;
+            letter-spacing: 0.02em;
+            animation: fadeUp 0.8s ease both;
+        }
+
+        .intro-sub {
+            font-size: 11px;
+            letter-spacing: 0.28em;
+            color: #7a5c30;
+            text-transform: uppercase;
+            text-align: center;
+            margin-top: 6px;
+            margin-bottom: 2rem;
+            animation: fadeUp 0.8s 0.1s ease both;
+        }
+
+        .intro-divider {
+            width: 60px;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #c98a2e, transparent);
+            margin: 0 auto 2rem;
+            animation: fadeUp 0.8s 0.15s ease both;
+        }
+
+        .intro-body {
+            max-width: 500px;
+            text-align: center;
+            animation: fadeUp 0.8s 0.25s ease both;
+        }
+
+            .intro-body p {
+                color: #c4a97a;
+                font-size: 0.95rem;
+                line-height: 1.9;
+                font-weight: 300;
+                font-family: 'DM Sans', sans-serif;
+            }
+
+                .intro-body p + p {
+                    margin-top: 0.9rem;
+                }
+
+        .get-started-btn {
+            display: inline-block;
+            margin-top: 2.4rem;
+            padding: 0.8rem 2.4rem;
+            border: 1px solid #c98a2e;
+            color: #c98a2e;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.78rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            cursor: pointer;
+            background: transparent;
+            border-radius: 3px;
+            transition: background 0.3s, color 0.3s;
+            animation: fadeUp 0.8s 0.4s ease both;
+        }
+
+            .get-started-btn:hover {
+                background: #c98a2e;
+                color: #1a1209;
+            }
+
+        @@keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── LOGIN SCREEN (right panel only, full width) ── */
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #f5f0e8;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+
+            .login-screen.show {
+                opacity: 1;
+            }
+
+        /* Override shared CSS — no left panel, center the form */
+        .login-right {
+            width: 100%;
+            max-width: 440px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 12px 48px rgba(26,18,9,0.12);
+            padding: 52px 44px;
+            margin: 40px auto;
+        }
+
+        .remember-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            margin-top: 4px;
+        }
+
+            .remember-row input[type="checkbox"] {
+                width: 16px;
+                height: 16px;
+                accent-color: var(--blue);
+                cursor: pointer;
+            }
+
+            .remember-row label {
+                font-size: 13px;
+                color: #888;
+                cursor: pointer;
+            }
+          @if (ViewBag.Error != null || TempData["ShowLogin"] != null || Context.Request.Query["direct"] == "1")
+           {
+            <text>
+                 #loadingScreen { display: none !important; }
+                 #introScreen { display: none !important; }
+                 #loginScreen { opacity: 1 !important; }
+            </text>
+            }
+    </style>
+</head>
+<body>
+
+    <!-- ═══ LOADING SCREEN ═══ -->
+    <div id="loadingScreen">
+        <div class="load-brand">Librarium</div>
+        <div class="load-tagline">Student Portal</div>
+        <div class="book-wrap">
+            <div class="book-pages">
+                <div class="book-line" style="width:50px;"></div>
+                <div class="book-line" style="width:40px;"></div>
+                <div class="book-line" style="width:45px;"></div>
+                <div class="book-line" style="width:35px;"></div>
+            </div>
+            <div class="book-cover-left"></div>
+            <div class="book-spine"></div>
+            <div class="book-cover-right"></div>
+        </div>
+        <div class="load-text">
+            Loading<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+        </div>
+    </div>
+
+    <!-- ═══ INTRO SCREEN ═══ -->
+    <div id="introScreen">
+        <div class="intro-logo">Librarium</div>
+        <div class="intro-sub">Student Portal</div>
+        <div class="intro-divider"></div>
+        <div class="intro-body">
+            <p>Librarium was built to make knowledge accessible to every student. Browse thousands of titles, borrow books with a single tap, and track your reading history — all in one place.</p>
+            <p>Whether you're working on a research paper or looking for your next great read, Librarium keeps your library in your pocket — open, simple, and always there when you need it.</p>
+        </div>
+        <button class="get-started-btn" onclick="showLogin()">Get Started →</button>
+    </div>
+
+    <!-- ═══ LOGIN SCREEN ═══ -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-right">
+            <div class="login-form-title">Student Login</div>
+            <div class="login-form-sub">Browse and borrow from the library</div>
+            @if (ViewBag.Error != null)
+            {
+                <div class="login-error" style="display:block">❌ @ViewBag.Error</div>
+            }
+            <form method="post" action="/Auth/StudentLogin">
+                @Html.AntiForgeryToken()
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input class="form-input" name="email" id="emailInput" type="email" placeholder="Enter your email" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div style="position:relative;">
+                        <input class="form-input" name="password" id="loginPassword" type="password" placeholder="Enter your password" required style="padding-right:42px;" />
+                        <button type="button" onclick="togglePw('loginPassword','loginEye')" id="loginEye" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--dust);padding:0;line-height:1;">👁️</button>
+                    </div>
+                </div>
+                <div class="remember-row">
+                    <input type="checkbox" id="rememberMe" />
+                    <label for="rememberMe">Remember me</label>
+                </div>
+                <button type="submit" class="btn-login" style="background:var(--blue);">Sign In →</button>
+            </form>
+            <p style="text-align:center;margin-top:12px;font-size:13px;">
+                <a href="/Auth/ForgotPassword" style="color:var(--blue);">Forgot Password?</a>
+            </p>
+            <p style="text-align:center;margin-top:8px;font-size:13px;color:#888;">
+                No account? <a href="/Auth/Register" style="color:var(--blue);">Sign Up</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function showLogin() {
+            var intro = document.getElementById('introScreen');
+            intro.classList.add('hide');
+            setTimeout(function () {
+                intro.style.display = 'none';
+                document.getElementById('loginScreen').classList.add('show');
+            }, 700);
+        }
+
+                window.addEventListener('load', function () {
+            // Restore remembered email
+            var savedEmail = localStorage.getItem('rememberedEmail');
+            if (savedEmail) {
+                document.getElementById('emailInput').value = savedEmail;
+                document.getElementById('rememberMe').checked = true;
+            }
+
+            var hasError = @Html.Raw(ViewBag.Error != null ? "true" : "false");
+
+            if (hasError) {
+                // Skip loading and intro, go straight to login
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('introScreen').style.display = 'none';
+                document.getElementById('loginScreen').classList.add('show');
+            } else {
+                // Normal flow: loading → intro
+                setTimeout(function () {
+                    var loader = document.getElementById('loadingScreen');
+                    loader.classList.add('hide');
+                    setTimeout(function () {
+                        loader.style.display = 'none';
+                        document.getElementById('introScreen').classList.add('show');
+                    }, 600);
+                }, 2000);
+            }
+        });
+
+        // Save or clear email on form submit
+        document.querySelector('form').addEventListener('submit', function () {
+            var rememberMe = document.getElementById('rememberMe').checked;
+            var email = document.getElementById('emailInput').value;
+            if (rememberMe) {
+                localStorage.setItem('rememberedEmail', email);
+            } else {
+                localStorage.removeItem('rememberedEmail');
+            }
+        });
+
+        function togglePw(inputId, btnId) {
+            var input = document.getElementById(inputId);
+            var btn = document.getElementById(btnId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁️';
+            }
+        }
+    </script>
+</body>
+</html>

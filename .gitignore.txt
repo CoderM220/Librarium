@@ -1,0 +1,23 @@
+# .NET
+.vs/
+bin/
+obj/
+*.user
+*.suo
+
+# Android
+.gradle/
+build/
+.idea/
+*.iml
+local.properties
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Sensitive
+appsettings.Development.json

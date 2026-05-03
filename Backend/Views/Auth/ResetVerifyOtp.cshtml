@@ -1,0 +1,36 @@
+﻿@{
+    ViewData["Title"] = "Verify OTP";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <h4 class="text-center mb-1">Verify OTP</h4>
+                    <p class="text-center text-muted mb-4">
+                        A 6-digit OTP has been sent to<br />
+                        <strong>@ViewBag.MaskedEmail</strong>
+                    </p>
+
+                    @if (ViewBag.Error != null)
+                    {
+                        <div class="alert alert-danger">@ViewBag.Error</div>
+                    }
+
+                    <form method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label">OTP Code</label>
+                            <input type="text" name="otp" class="form-control text-center"
+                                   maxlength="6" placeholder="------" required autofocus />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Verify</button>
+                        <a href="/Auth/ForgotPassword" class="btn btn-link w-100 mt-2">Back</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,28 @@
+﻿@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewBag.Title = "Verify OTP";
+}
+
+<div style="max-width:420px;margin:60px auto;">
+    <div style="background:#fff;border:1px solid var(--paper);border-radius:14px;padding:28px 32px;">
+        <h4 style="font-family:'Playfair Display',serif;color:var(--ink);margin:0 0 6px;">Verify OTP</h4>
+        <p style="font-size:13px;color:var(--dust);margin:0 0 20px;">
+            We sent a 6-digit code to <strong>@ViewBag.MaskedEmail</strong>. Enter it below.
+        </p>
+
+        @if (ViewBag.Error != null)
+        {
+            <div style="background:rgba(122,32,32,0.08);border:1px solid rgba(122,32,32,0.2);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--burgundy);margin-bottom:14px;">❌ @ViewBag.Error</div>
+        }
+
+        <form method="post">
+            @Html.AntiForgeryToken()
+            <div class="form-group">
+                <label class="form-label">OTP Code</label>
+                <input type="text" name="otp" class="form-input" placeholder="Enter 6-digit code" maxlength="6" required autofocus />
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px;">Verify OTP</button>
+            <a href="/Admin/ForgotPassword" class="btn btn-outline" style="width:100%;margin-top:8px;text-align:center;display:block;">Back</a>
+        </form>
+    </div>
+</div>

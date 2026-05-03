@@ -1,0 +1,111 @@
+﻿@model Librarium.Controllers.AdminDashboardViewModel
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewBag.Title = "Dashboard";
+    ViewBag.PageName = "Dashboard";
+}
+
+<div class="stats-row" style="grid-template-columns: repeat(6, 1fr);">
+    <a href="/Admin/Books" class="stat-card sc-amber" style="text-decoration:none;display:block;cursor:pointer;">
+        <div class="stat-ico">📚</div>
+        <div class="stat-val">@Model.TotalBooks</div>
+        <div class="stat-lbl">Total Books</div>
+    </a>
+    <a href="/Admin/Borrowing" class="stat-card sc-burg" style="text-decoration:none;display:block;cursor:pointer;">
+        <div class="stat-ico">↔️</div>
+        <div class="stat-val">@Model.ActiveBorrows</div>
+        <div class="stat-lbl">Borrowed</div>
+    </a>
+    <a href="/Admin/Members" class="stat-card sc-sage" style="text-decoration:none;display:block;cursor:pointer;">
+        <div class="stat-ico">👥</div>
+        <div class="stat-val">@Model.TotalMembers</div>
+        <div class="stat-lbl">Members</div>
+    </a>
+    <a href="/Admin/Overdue" class="stat-card sc-dust" style="text-decoration:none;display:block;cursor:pointer;">
+        <div class="stat-ico">⚠️</div>
+        <div class="stat-val">@Model.OverdueCount</div>
+        <div class="stat-lbl">Overdue</div>
+    </a>
+    <a href="/Admin/BookingRequests" class="stat-card sc-blue" style="text-decoration:none;display:block;cursor:pointer;">
+        <div class="stat-ico">📋</div>
+        <div class="stat-val">@Model.BookingRequestCount</div>
+        <div class="stat-lbl">Booking Requests</div>
+    </a>
+    <a href="/Admin/Shelves" class="stat-card sc-amber" style="text-decoration:none;display:block;cursor:pointer;">
+        <div class="stat-ico">🗂️</div>
+        <div class="stat-val">@Model.ShelfCount</div>
+        <div class="stat-lbl">Shelves</div>
+    </a>
+</div>
+
+<div class="g2">
+    <div class="panel">
+        <div class="panel-header">
+            <span class="panel-title">📋 Recent Books</span>
+            <a href="/Admin/Books" class="btn btn-outline">View All</a>
+        </div>
+        <table>
+            <thead>
+                <tr><th>Book</th><th>Status</th><th>Copies</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model.RecentBooks)
+                {
+                    <tr>
+                        <td>
+                            <div class="book-cell">
+                                <div class="book-thumb" style="padding:0;overflow:hidden;">
+                                    @if (!string.IsNullOrEmpty(b.CoverUrl))
+                                    {
+                                        <img src="@b.CoverUrl" style="width:100%;height:100%;object-fit:cover;" />
+                                    }
+                                    else
+                                    {
+
+                                        @b.Emoji
+                                    }
+                                </div>
+                                <div>
+                                    <span class="book-t">@b.Title</span>
+                                    <span class="book-a">@b.Author</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            @if (b.Status == "available")
+                            {
+                                <span class="badge b-avail">Available</span>
+                            }
+                            else
+                            {
+
+                                <span class="badge b-borrow">Borrowed</span>
+                            }
+                        </td>
+                        <td>@b.AvailableCopies / @b.Copies</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel">
+        <div class="panel-header"><span class="panel-title">📅 Due Returns</span></div>
+        @foreach (var r in Model.DueReturns)
+        {
+            var diff = (r.DueDate.Date - DateTime.Today).Days;
+            var cls = diff < 0 ? "d-late" : diff == 0 ? "d-today" : "d-soon";
+            var lbl = diff < 0 ? $"{Math.Abs(diff)} days late" : diff == 0 ? "Today" : $"In {diff} days";
+            <div class="due-item">
+                <div class="due-ava" style="background:linear-gradient(135deg,var(--amber),var(--burgundy))">
+                    @r.StudentName.Substring(0, Math.Min(2, r.StudentName.Length)).ToUpper()
+                </div>
+                <div class="due-info">
+                    <div class="due-name">@r.StudentName</div>
+                    <div class="due-book">@r.BookTitle</div>
+                </div>
+                <span class="due-badge @cls">@lbl</span>
+            </div>
+        }
+    </div>
+</div>

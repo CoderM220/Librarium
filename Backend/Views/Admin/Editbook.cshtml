@@ -1,0 +1,80 @@
+﻿@model Librarium.Models.Book
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewBag.Title = "Edit Book";
+    ViewBag.PageName = "Books";
+    var shelves = ViewBag.Shelves as IEnumerable<Librarium.Models.Shelf> ?? new List<Librarium.Models.Shelf>();
+}
+<div class="panel" style="max-width:680px;">
+    <div class="panel-header">
+        <span class="panel-title">✏️ Edit Book</span>
+        <a href="/Admin/Books" class="btn btn-outline">← Back to Books</a>
+    </div>
+    <form method="post" action="/Admin/EditBook" style="padding:8px 0;">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="form-group" style="grid-column:1/-1;">
+                <label class="form-label">Title *</label>
+                <input class="form-input" name="Title" value="@Model.Title" required />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Author *</label>
+                <input class="form-input" name="Author" value="@Model.Author" required />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Genre</label>
+                <input class="form-input" name="Genre" value="@Model.Genre" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">ISBN</label><input
+                <input class="form-input" id="isbnInput" name="ISBN" value="@Model.ISBN" />
+                <input type="hidden" id="CoverUrl" name="CoverUrl" value="@Model.CoverUrl" />
+                <img id="coverPreview" src="@Model.CoverUrl" alt="Cover"
+                     style="margin-top:8px;height:80px;border-radius:6px;display:@(string.IsNullOrEmpty(Model.CoverUrl) ? "none" : "block");" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Year</label>
+                <input class="form-input" name="Year" type="number" value="@Model.Year" min="1000" max="2099" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Total Copies *</label>
+                <input class="form-input" name="Copies" type="number" value="@Model.Copies" min="1" required />
+                <span style="font-size:11px;color:#888;margin-top:4px;display:block;">
+                    Currently @Model.AvailableCopies available — changing total copies adjusts available count proportionally.
+                </span>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Emoji</label>
+                <input class="form-input" name="Emoji" value="@Model.Emoji" style="max-width:100px;" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Assign to Shelf</label>
+                <select class="form-input" name="ShelfId">
+                    <option value="">— No shelf —</option>
+                    @foreach (var shelf in shelves)
+                    {
+                        var label = shelf.ShelfType == "rack" ? "Rack" : "Almirah";
+                        @if (Model.ShelfId == shelf.Id)
+                        {
+                            <option value="@shelf.Id" selected>@label @shelf.ShelfCode</option>
+                        }
+                        else
+                        {
+                            <option value="@shelf.Id">@label @shelf.ShelfCode</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+                <label class="form-label">Description</label>
+                <textarea class="form-input" name="Description" rows="3" style="resize:vertical;">@Model.Description</textarea>
+            </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px;">
+            <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+            <a href="/Admin/Books" class="btn btn-outline">Cancel</a>
+        </div>
+    </form>
+    <script src="~/js/addbook.js"></script>
+</div>

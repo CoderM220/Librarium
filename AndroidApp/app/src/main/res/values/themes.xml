@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.Librarium" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+
+        <!-- Full screen background -->
+        <item name="android:windowBackground">#000000</item>
+
+        <!-- Splash screen background -->
+        <item name="android:windowSplashScreenBackground">#000000</item>
+
+        <!-- ONLY logo (no background) -->
+        <item name="android:windowSplashScreenAnimatedIcon">
+            @mipmap/ic_launcher_foreground
+        </item>
+
+        <!-- THIS gives white rounded icon background -->
+        <item name="android:windowSplashScreenIconBackgroundColor">
+            @android:color/white
+        </item>
+
+    </style>
+
+</resources>

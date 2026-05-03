@@ -1,0 +1,119 @@
+﻿@model Librarium.Models.Book
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewBag.Title = "Add Book";
+    ViewBag.PageName = "Books";
+    var shelves = ViewBag.Shelves as IEnumerable<Librarium.Models.Shelf> ?? new List<Librarium.Models.Shelf>();
+}
+
+<div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+    @* MANUAL ADD FORM *@
+    <div class="panel" style="flex:1;min-width:320px;">
+        <div class="panel-header">
+            <span class="panel-title">➕ Add New Book</span>
+            <a href="/Admin/Books" class="btn btn-outline">← Back to Books</a>
+        </div>
+        <form method="post" action="/Admin/AddBook" style="padding:8px 0;">
+            @Html.AntiForgeryToken()
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label class="form-label">Title *</label>
+                    <input class="form-input" name="Title" value="@Model.Title" placeholder="e.g. The Great Gatsby" required />
+                    @if (!ViewData.ModelState.IsValid && ViewData.ModelState["Title"]?.Errors.Count > 0)
+                    {
+                        <span style="color:var(--burgundy);font-size:12px;">@ViewData.ModelState["Title"]!.Errors[0].ErrorMessage</span>
+                    }
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Author *</label>
+                    <input class="form-input" name="Author" value="@Model.Author" placeholder="e.g. F. Scott Fitzgerald" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ISBN</label>
+                    <input class="form-input" id="isbnInput" name="ISBN" value="@Model.ISBN" placeholder="e.g. 978-0-7432-7356-5" />
+                    <input type="hidden" id="CoverUrl" name="CoverUrl" value="@Model.CoverUrl" />
+                    <img id="coverPreview" src="@Model.CoverUrl" alt="Cover"
+                         style="margin-top:8px;height:80px;border-radius:6px;display:@(string.IsNullOrEmpty(Model.CoverUrl) ? "none" : "block");" />
+                    @if (!ViewData.ModelState.IsValid && ViewData.ModelState["ISBN"]?.Errors.Count > 0)
+                    {
+                        <span style="color:var(--burgundy);font-size:12px;">@ViewData.ModelState["ISBN"]!.Errors[0].ErrorMessage</span>
+                    }
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Year</label>
+                    <input class="form-input" name="Year" type="number" value="@(Model.Year > 0 ? Model.Year.ToString() : "")" placeholder="e.g. 1999" min="1000" max="2099" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Total Copies *</label>
+                    <input class="form-input" name="Copies" type="number" value="@(Model.Copies > 0 ? Model.Copies.ToString() : "")" placeholder="e.g. 3" min="1" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Emoji</label>
+                    <input class="form-input" name="Emoji" value="@(string.IsNullOrEmpty(Model.Emoji) ? "📖" : Model.Emoji)" placeholder="📖" style="max-width:100px;" />
+                </div>
+                <div class="form-group" style="grid-column:1/-1;">
+                    <label class="form-label">Assign to Shelf</label>
+                    <select class="form-input" name="ShelfId">
+                        <option value="">— No shelf —</option>
+                        @foreach (var shelf in shelves)
+                        {
+                            var label = shelf.ShelfType == "rack" ? "Rack" : "Almirah";
+                            if (Model.ShelfId == shelf.Id)
+                            {
+                                <option value="@shelf.Id" selected>@label @shelf.ShelfCode</option>
+                            }
+                            else
+                            {
+                                <option value="@shelf.Id">@label @shelf.ShelfCode</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:8px;">
+                <button type="submit" class="btn btn-primary">✅ Add Book</button>
+                <a href="/Admin/Books" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+    @* CSV UPLOAD *@
+    <div class="panel" style="width:300px;flex-shrink:0;">
+        <div class="panel-header">
+            <span class="panel-title">📂 Bulk Import via CSV</span>
+        </div>
+        <div style="padding:18px;">
+            <p style="font-size:13px;color:var(--dust);margin-bottom:14px;line-height:1.6;">
+                Upload a <strong>.csv</strong> file to add multiple books at once.
+            </p>
+            <div style="background:var(--paper);border-radius:8px;padding:12px;font-size:12px;color:#7a6a5a;margin-bottom:16px;line-height:1.8;">
+                <strong style="color:var(--amber);">Required columns:</strong><br/>
+                Title, Author, Copies<br/>
+                <strong style="color:var(--amber);">Optional columns:</strong><br/>
+                ISBN, Year, Emoji, Shelf<br/>
+                <span style="color:var(--text-muted); font-size:0.75rem;">Order: Title, Author, ISBN, Year, Copies, Shelf</span>
+            </div>
+            <form method="post" action="/Admin/ImportBooks" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <div class="form-group">
+                    <label class="form-label">Select CSV File</label>
+                    <input type="file" name="csvFile" accept=".csv" class="form-input" required style="padding:6px;" />
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">📥 Import Books</button>
+            </form>
+            @if (TempData["CsvSuccess"] != null)
+            {
+                <div style="margin-top:12px;background:rgba(74,122,92,0.1);border:1px solid rgba(74,122,92,0.25);border-radius:8px;padding:10px;font-size:13px;color:var(--sage);">
+                    ✅ @TempData["CsvSuccess"]
+                </div>
+            }
+            @if (TempData["CsvError"] != null)
+            {
+                <div style="margin-top:12px;background:rgba(122,32,32,0.08);border:1px solid rgba(122,32,32,0.2);border-radius:8px;padding:10px;font-size:13px;color:var(--burgundy);">
+                    ❌ @TempData["CsvError"]
+                </div>
+            }
+           
+        </div>
+    </div>
+    <script src="~/js/addbook.js"></script>
+</div>

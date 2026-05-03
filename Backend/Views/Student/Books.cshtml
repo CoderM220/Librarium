@@ -1,0 +1,410 @@
+﻿@model List<Librarium.Models.Book>
+@{
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewBag.Title = "Books";
+    ViewBag.PageName = "Books";
+    var genres = ViewBag.Genres as List<string> ?? new();
+    var coverColors = new[] { "cover-amber", "cover-burg", "cover-sage", "cover-blue", "cover-dust" };
+    var currentGenre = ViewBag.Genre as string ?? "";
+    var pendingBookIds = ViewBag.PendingBookIds as List<int> ?? new List<int>();
+}
+<style>
+    .btn-request {
+        width: 100%;
+        padding: 7px 0;
+        background: var(--blue, #2563eb);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        margin-top: 8px;
+    }
+
+        .btn-request:hover {
+            opacity: 0.88;
+        }
+
+    .btn-details {
+        width: 100%;
+        padding: 7px 0;
+        background: transparent;
+        color: var(--text-muted);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        margin-top: 6px;
+    }
+
+        .btn-details:hover {
+            background: var(--bg-secondary);
+        }
+
+    @@media (max-width: 768px) {
+        .book-grid {
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 10px !important;
+        }
+
+        .book-card-cover {
+            height: 80px !important;
+            font-size: 28px !important;
+        }
+
+        .book-card-body {
+            padding: 8px !important;
+        }
+
+        .book-card-title {
+            font-size: 11px !important;
+        }
+
+        .book-card-author {
+            font-size: 10px !important;
+        }
+
+        .btn-request, .btn-details {
+            font-size: 10px !important;
+            padding: 5px 0 !important;
+        }
+    }
+</style>
+
+<div class="search-hero" style="overflow:visible;position:relative;z-index:200;">
+    <div class="search-hero-title">Find Your Next Read 📖</div>
+    <div class="search-hero-sub">Browse our entire collection</div>
+    <div style="position:relative;max-width:480px;margin:0 auto;">
+        <div class="search-hero-box" style="margin-bottom:0;">
+            <input id="searchInput" class="search-hero-input" name="search"
+                   value="@ViewBag.Search" placeholder="Search by title, author…"
+                   autocomplete="off" />
+            <button type="button" class="search-hero-btn"
+                    onclick="doSearch()">
+                Search
+            </button>
+        </div>
+        <div id="suggestions" style="
+            display:none;position:absolute;top:100%;left:0;right:0;
+            background:var(--cream);border:1px solid var(--border);
+            border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.12);
+            z-index:1100;max-height:320px;overflow-y:auto;margin-top:4px;">
+        </div>
+    </div>
+</div>
+
+@if (genres.Any())
+{
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+        <a href="/Student/Books" class="genre-tag @(string.IsNullOrEmpty(currentGenre) ? "active" : "")"
+           style="cursor:pointer;padding:6px 12px;">All</a>
+        @foreach (var g in genres)
+        {
+            <a href="/Student/Books?genre=@g"
+               class="genre-tag @(currentGenre == g ? "active" : "")"
+               style="cursor:pointer;padding:6px 12px;">@g</a>
+        }
+    </div>
+}
+
+<div class="book-grid">
+    @for (int i = 0; i < Model.Count; i++)
+    {
+        var b = Model[i];
+        var c = coverColors[i % coverColors.Length];
+        <div class="book-card">
+            <div class="book-card-cover @c">
+                @if (!string.IsNullOrEmpty(b.CoverUrl))
+                {
+                    <img src="@b.CoverUrl" alt="@b.Title" />
+                }
+                else
+                {
+                    @b.Emoji
+                }
+            </div>
+            <div class="book-card-body">
+                <div class="book-card-title">@b.Title</div>
+                <div class="book-card-author">@b.Author</div>
+                <div class="book-card-footer">
+                    @if (b.AvailableCopies > 0)
+                    {
+                        <span class="badge b-avail">Available</span>
+                    }
+                    else
+                    {
+                        <span class="badge b-borrow">Unavailable</span>
+                    }
+                </div>
+                <button class="btn-details" onclick="viewDetail(@b.Id)">
+                    🔍 View Details
+                </button>
+                @{
+                    var safeTitle = b.Title.Replace("'", "\\'");
+                }
+                @if (pendingBookIds.Contains(b.Id))
+                {
+                    <button class="btn-request" disabled style="background:#4a7a5c;cursor:not-allowed;opacity:0.8;">
+                        ✅ Requested
+                    </button>
+                }
+                else
+                {
+                    <button class="btn-request" data-bookid="@b.Id" onclick="requestBook(@b.Id, '@safeTitle')">
+                        📖 Request Book
+                    </button>
+                }
+            </div>
+        </div>
+    }
+    @if (!Model.Any())
+    {
+        <div style="grid-column:1/-1;text-align:center;color:#aaa;padding:60px 0;">
+            No books found.
+        </div>
+    }
+</div>
+
+@* BOOK DETAIL MODAL *@
+<div id="detailModal" style="
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,0.45);z-index:1000;
+    align-items:center;justify-content:center;">
+    <div style="
+        background:var(--cream);border-radius:16px;
+        padding:28px 32px;width:480px;max-width:95vw;
+        box-shadow:0 8px 40px rgba(0,0,0,0.2);position:relative;">
+        <button onclick="closeModal()" style="
+            position:absolute;top:14px;right:16px;
+            background:none;border:none;font-size:20px;
+            cursor:pointer;color:var(--text-muted);">
+            ✕
+        </button>
+        <div id="modalContent"></div>
+    </div>
+</div>
+
+@* Toast *@
+<div id="toast" style="display:none;position:fixed;bottom:24px;left:50%;
+    transform:translateX(-50%);background:#333;color:#fff;
+    padding:12px 24px;border-radius:8px;font-size:14px;
+    z-index:9999;text-align:center;"></div>
+
+@Html.AntiForgeryToken()
+
+<script>
+    // ── AUTOCOMPLETE ──
+    let searchTimer;
+    const inp = document.getElementById('searchInput');
+    const sug = document.getElementById('suggestions');
+
+    inp.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        const q = inp.value.trim();
+        if (q.length < 2) { sug.style.display = 'none'; return; }
+        searchTimer = setTimeout(() => {
+            fetch(`/Student/BookSearch?q=${encodeURIComponent(q)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.length) { sug.style.display = 'none'; return; }
+                    sug.innerHTML = data.map(b => `
+                        <div class="sug-item" data-id="${b.id}" style="
+                            padding:10px 14px;cursor:pointer;
+                            border-bottom:1px solid var(--border);
+                            display:flex;align-items:center;gap:10px;">
+                            <span style="font-size:20px;">${b.emoji}</span>
+                            <div style="flex:1;">
+                                <div style="font-size:13px;font-weight:500;color:var(--text-primary);">
+                                    ${b.title}
+                                </div>
+                                <div style="font-size:11px;color:var(--text-muted);">
+                                    ${b.author}
+                                    ${b.shelfCode
+                                        ? `· 📍 ${b.shelfType === 'rack' ? 'Rack' : 'Almirah'} ${b.shelfCode}`
+                                        : '· No shelf assigned'}
+                                </div>
+                            </div>
+                            <span style="font-size:10px;padding:2px 8px;border-radius:10px;
+                                background:${b.status === 'available'
+                                    ? 'rgba(107,142,107,0.15)' : 'rgba(139,60,60,0.15)'};
+                                color:${b.status === 'available'
+                                    ? 'var(--sage)' : 'var(--burgundy)'};">
+                                ${b.status}
+                            </span>
+                        </div>`).join('');
+                    sug.style.display = 'block';
+
+                    sug.querySelectorAll('.sug-item').forEach(el => {
+                        el.addEventListener('mouseenter', () => el.style.background = 'var(--bg-secondary)');
+                        el.addEventListener('mouseleave', () => el.style.background = '');
+                        el.addEventListener('click', () => {
+                            viewDetail(parseInt(el.dataset.id));
+                            sug.style.display = 'none';
+                        });
+                    });
+                });
+        }, 250);
+    });
+
+    document.addEventListener('click', e => {
+        if (!inp.contains(e.target) && !sug.contains(e.target))
+            sug.style.display = 'none';
+    });
+
+    function doSearch() {
+        const q = inp.value.trim();
+        window.location = '/Student/Books?search=' + encodeURIComponent(q);
+    }
+
+    inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter') doSearch();
+    });
+
+    // ── VIEW DETAIL MODAL ──
+    function viewDetail(id) {
+        fetch(`/Student/BookDetail?id=${id}`)
+            .then(r => r.json())
+            .then(b => {
+                const shelfInfo = b.shelfCode
+                    ? `<span style="
+                        display:inline-flex;align-items:center;gap:4px;
+                        padding:3px 10px;border-radius:20px;font-size:12px;
+                        background:rgba(184,142,74,0.15);color:var(--amber);
+                        border:1px solid var(--amber);">
+                        📍 ${b.shelfType === 'rack' ? 'Rack' : 'Almirah'} ${b.shelfCode}
+                      </span>`
+                    : `<span style="
+                        display:inline-flex;align-items:center;gap:4px;
+                        padding:3px 10px;border-radius:20px;font-size:12px;
+                        background:rgba(0,0,0,0.06);color:var(--text-muted);
+                        border:1px solid var(--border);">
+                        No shelf assigned
+                      </span>`;
+
+                document.getElementById('modalContent').innerHTML = `
+                    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
+                        <div style="font-size:48px;">${b.emoji}</div>
+                        <div>
+                            <div style="font-size:18px;font-weight:700;color:var(--text-primary);">
+                                ${b.title}
+                            </div>
+                            <div style="font-size:13px;color:var(--text-muted);margin-top:2px;">
+                                ${b.author}
+                            </div>
+                            <div style="margin-top:6px;">${shelfInfo}</div>
+                        </div>
+                    </div>
+                        <div style="background:var(--bg-secondary);border-radius:8px;padding:10px 14px;">
+                            <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">YEAR</div>
+                            <div style="font-size:13px;font-weight:500;">${b.year || '—'}</div>
+                        </div>
+                        <div style="background:var(--bg-secondary);border-radius:8px;padding:10px 14px;">
+                            <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">ISBN</div>
+                            <div style="font-size:13px;font-weight:500;">${b.isbn || '—'}</div>
+                        </div>
+                        <div style="background:var(--bg-secondary);border-radius:8px;padding:10px 14px;">
+                            <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">COPIES</div>
+                            <div style="font-size:13px;font-weight:500;">${b.availableCopies} / ${b.copies}</div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom:14px;">
+                        <span style="padding:3px 12px;border-radius:20px;font-size:12px;font-weight:500;
+                            background:${b.status === 'available'
+                                ? 'rgba(107,142,107,0.15)' : 'rgba(139,60,60,0.15)'};
+                            color:${b.status === 'available'
+                                ? 'var(--sage)' : 'var(--burgundy)'};">
+                            ${b.status === 'available' ? '✅ Available' : '📤 Borrowed'}
+                        </span>
+                    </div>
+                    ${b.description ? `
+                    <div style="font-size:12px;color:var(--text-muted);
+                                border-top:1px solid var(--border);padding-top:12px;
+                                margin-bottom:14px;">
+                        ${b.description}
+                    </div>` : ''}
+                    <div style="display:flex;gap:8px;margin-top:8px;">
+                        <button onclick="requestBookFromModal(${b.id}, '${b.title.replace(/'/g, "\\'")}')"
+                                class="btn btn-primary" style="font-size:13px;">
+                            📖 Request Book
+                        </button>
+                        <button onclick="closeModal()" class="btn btn-outline"
+                                style="font-size:13px;">Close</button>
+                    </div>`;
+
+                document.getElementById('detailModal').style.display = 'flex';
+            });
+    }
+
+            function requestBookFromModal(bookId, title) {
+        fetch('/Student/RequestBooking', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? ''
+            },
+            body: 'bookId=' + bookId
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.expired) { window.location.href = '/Auth/StudentLogin?direct=1'; return; }
+           showToast(data.success ? data.message + ' (expires in 24 hrs)' : data.message, data.success);
+            if (data.success) {
+                closeModal();
+                const btns = document.querySelectorAll('.btn-request');
+                btns.forEach(btn => {
+                    if (btn.getAttribute('onclick').includes('(' + bookId + ',')) {
+                        btn.textContent = '✅ Requested';
+                        btn.disabled = true;
+                        btn.style.background = '#4a7a5c';
+                    }
+                });
+            } else {
+                closeModal();
+            }
+        })
+        .catch(() => showToast('Something went wrong.', false));
+    }
+
+    function closeModal() {
+        document.getElementById('detailModal').style.display = 'none';
+    }
+
+    document.getElementById('detailModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+
+             function requestBook(bookId, title) {
+        fetch('/Student/RequestBooking', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? ''
+            },
+            body: 'bookId=' + bookId
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.expired) { window.location.href = '/Auth/StudentLogin?direct=1'; return; }
+           showToast(data.success ? data.message + ' (expires in 24 hrs)' : data.message, data.success);
+            if (data.success || data.message.includes('already have a pending request')) {
+                const btn = document.querySelector(`.btn-request[data-bookid="${bookId}"]`);
+                if (btn) {
+                    btn.textContent = '✅ Requested';
+                    btn.disabled = true;
+                    btn.style.background = '#4a7a5c';
+                    btn.style.cursor = 'not-allowed';
+                    btn.style.opacity = '0.8';
+                }
+            }
+        })
+        .catch(() => showToast('Something went wrong.', false));
+    }
+
+    function showToast(msg, success) {
+        var t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.background = success ? '#2d6a4f' : '#c0392b';
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3500);
+    }
+</script>

@@ -1,0 +1,184 @@
+﻿@using Microsoft.AspNetCore.Http
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Librarium — @ViewBag.Title</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link href="~/css/librarium-shared.css" rel="stylesheet" />
+    <style>
+        body {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 230px;
+            position: relative;
+            z-index: 10;
+            min-width: 0;
+        }
+
+        @* Collapse sidebar on mobile *@
+        @@media (max-width: 768px) {
+            .main-content
+
+        {
+            margin-left: 0 !important;
+        }
+
+        .sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 200;
+        }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+        .topbar {
+            padding-left: 60px !important;
+        }
+
+        .content {
+            padding: 16px !important;
+        }
+
+        table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .stats-row {
+            grid-template-columns: repeat(2, 1fr) !important;
+        }
+
+        .g2, .g3 {
+            grid-template-columns: 1fr !important;
+        }
+
+        }
+
+        .sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 200;
+        }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+        .main-content {
+            margin-left: 0 !important;
+        }
+    </style>
+</head>
+<body>
+    <script>if(localStorage.getItem('libDarkStudent')==='1')document.body.classList.add('dark');</script>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <button class="hamburger hamburger-always" id="hamburgerBtn" aria-label="Toggle menu"
+            style="background:#fff;border:1px solid #E0D0B8;border-radius:8px;width:36px;height:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;position:fixed;top:14px;left:14px;z-index:190;">
+        <span style="display:block;width:16px;height:1.5px;background:#8B5E3C;border-radius:2px;"></span>
+        <span style="display:block;width:16px;height:1.5px;background:#8B5E3C;border-radius:2px;"></span>
+        <span style="display:block;width:16px;height:1.5px;background:#8B5E3C;border-radius:2px;"></span>
+    </button>
+
+    <div style="display:flex;min-height:100vh;">
+        <aside class="sidebar">
+            <div class="sidebar-logo" style="display:flex;align-items:center;gap:10px;padding-left:16px;">
+                <div style="width:32px;height:32px;border-radius:6px;background:#C8832A;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="2" width="10" height="14" rx="1.5" fill="#F5E6D0" />
+                        <rect x="5" y="2" width="10" height="14" rx="1.5" fill="#E8C98A" opacity="0.6" />
+                        <line x1="4" y1="6" x2="10" y2="6" stroke="#2C1810" stroke-width="1" stroke-linecap="round" />
+                        <line x1="4" y1="9" x2="10" y2="9" stroke="#2C1810" stroke-width="1" stroke-linecap="round" />
+                        <line x1="4" y1="12" x2="8" y2="12" stroke="#2C1810" stroke-width="1" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div>
+                    <span class="sidebar-logo-name" style="display:block;">Librarium</span>
+                    <span class="sidebar-logo-role">Student Portal</span>
+                </div>
+            </div>
+            <nav class="nav">
+                <span class="nav-label">Overview</span>
+                <a href="/Student/Index" class="nav-item @(ViewBag.PageName == "Dashboard" ? "active" : "")">🏛️ Dashboard</a>
+                <a href="/Student/Books" class="nav-item @(ViewBag.PageName == "Books" ? "active" : "")">📚 Books</a>
+                <a href="/Student/Shelves" class="nav-item @(ViewBag.PageName == "Shelves" ? "active" : "")">🗂️ Shelves</a>
+                <a href="/Student/MyBorrows" class="nav-item @(ViewBag.PageName == "MyBorrows" ? "active" : "")">📋 My Borrows</a>
+                <a href="/Student/MyBookings" class="nav-item @(ViewBag.PageName == "MyBookings" ? "active" : "")">🗓️ My Bookings</a>
+                <span class="nav-label">Account</span>
+                <a href="/Student/Profile" class="nav-item @(ViewBag.PageName == "Profile" ? "active" : "")">👤 Profile</a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-pill">
+                    <div class="user-ava ava-student">@(Context.Session.GetString("StudentName")?.Substring(0, 2).ToUpper())</div>
+                    <div>
+                        <div class="user-name">@Context.Session.GetString("StudentName")</div>
+                        <div class="user-role-badge" style="color:#6aafff;">STUDENT</div>
+                    </div>
+                </div>
+                <a href="/Auth/StudentLogout" class="logout-btn">⬅️ Logout</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="topbar" style="padding-left: 68px;">
+                <div class="topbar-title">@ViewBag.PageName</div>
+                @if (TempData["Success"] != null)
+                {
+                    <span style="background:var(--sage);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;">✅ @TempData["Success"]</span>
+                }
+                @if (TempData["Error"] != null)
+                {
+                    <span style="background:var(--burgundy);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;">❌ @TempData["Error"]</span>
+                }
+            </div>
+            <div class="content">@RenderBody()</div>
+        </main>
+    </div>
+
+    <script>
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        function openMenu() {
+            sidebar.classList.add('open');
+            overlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMenu() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        hamburgerBtn.addEventListener('click', () => {
+            sidebar.classList.contains('open') ? closeMenu() : openMenu();
+        });
+
+        overlay.addEventListener('click', closeMenu);
+
+        document.querySelectorAll('.nav-item').forEach(link => {
+            link.addEventListener('click', closeMenu);
+        });
+            function toggleDarkMode() {
+        const on = document.body.classList.toggle('dark');
+        localStorage.setItem('libDarkStudent', on ? '1' : '0');
+        const el = document.getElementById('darkToggle');
+        if (el) { el.classList.toggle('on', on); el.classList.toggle('off', !on); }
+        }
+    </script>
+</body>
+</html>

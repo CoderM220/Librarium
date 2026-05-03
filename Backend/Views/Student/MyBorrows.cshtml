@@ -1,0 +1,198 @@
+﻿@model List<Librarium.Models.BorrowRecord>
+@{
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewBag.Title = "My Borrows";
+    ViewBag.PageName = "MyBorrows";
+}
+
+<style>
+    @@media (max-width: 768px) {
+        .borrow-table thead
+
+    {
+        display: none;
+    }
+
+    .borrow-table, .borrow-table tbody, .borrow-table tr, .borrow-table td {
+        display: block;
+        width: 100%;
+    }
+
+        .borrow-table tr {
+            background: #fff;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            padding: 14px 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            border: 1px solid var(--paper);
+        }
+
+        .borrow-table td {
+            padding: 4px 0;
+            border: none;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .borrow-table td::before {
+                content: attr(data-label);
+                font-size: 11px;
+                font-weight: 600;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                color: var(--dust);
+                flex-shrink: 0;
+                margin-right: 10px;
+            }
+
+            .borrow-table td:first-child {
+                font-size: 14px;
+                font-weight: 600;
+                margin-bottom: 6px;
+                display: block;
+            }
+
+                .borrow-table td:first-child::before {
+                    display: none;
+                }
+
+    .panel {
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+        background: transparent;
+    }
+
+    .panel-header {
+        border-radius: 12px;
+        background: #fff;
+        margin-bottom: 12px;
+        border: 1px solid var(--paper);
+    }
+
+    }
+</style>
+
+<div class="panel">
+    <div class="panel-header"><span class="panel-title">📋 My Borrow History</span></div>
+
+    @if (!Model.Any())
+    {
+        <div style="text-align:center;color:#aaa;padding:40px 0;">No borrow records yet.</div>
+    }
+    else
+    {
+        <div style="overflow-x:auto;">
+            <table class="borrow-table">
+                <thead>
+                    <tr>
+                        <th>Book</th>
+                        <th>Issued</th>
+                        <th>Due Date</th>
+                        <th>Days Left</th>
+                        <th>Returned</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model)
+                    {
+                        var diff = (r.DueDate.Date - DateTime.Today).Days;
+                        <tr>
+                            <td data-label="Book"><strong>@r.BookTitle</strong></td>
+                            <td data-label="Issued" style="color:#888;font-size:12px;">@r.IssuedDate.ToString("MMM d, yyyy")</td>
+                            <td data-label="Due" style="font-size:12px;">@r.DueDate.ToString("MMM d, yyyy")</td>
+                            <td data-label="Days Left">
+                                @if (r.Status == "returned")
+                                {
+                                    <span style="color:#aaa;font-size:12px;">—</span>
+                                }
+                                else
+                                {
+                                    var daysLeft = (r.DueDate.Date - DateTime.Today).Days;
+                                    var barColor = daysLeft <= 1 ? "var(--burgundy)" : daysLeft <= 3 ? "var(--amber)" : "var(--sage)";
+                                    var barWidth = Math.Max(0, Math.Min(100, (int)((daysLeft / 14.0) * 100)));
+                                    var label = daysLeft < 0 ? $"{Math.Abs(daysLeft)}d overdue" : daysLeft == 0 ? "Due today!" : $"{daysLeft}d left";
+                                    <div style="min-width:90px;">
+                                        <div style="font-size:12px;font-weight:600;color:@barColor;margin-bottom:4px;">@label</div>
+                                        <div style="background:#eee;border-radius:4px;height:5px;width:100%;">
+                                            <div style="background:@barColor;height:5px;border-radius:4px;width:@(barWidth)%;transition:width 0.3s;"></div>
+                                        </div>
+                                    </div>
+                                }
+                            </td>
+                            <td data-label="Returned" style="color:#888;font-size:12px;">@(r.ReturnedDate.HasValue? r.ReturnedDate.Value.ToString("MMM d, yyyy") : "—")</td>
+                            <td data-label="Status">
+                                @if (r.Status == "returned")
+                                {
+                                    <span class="badge b-avail">Returned</span>
+                                }
+                                else if (r.Status == "overdue")
+                                {
+                                    <span class="badge" style="background:rgba(122,32,32,0.1);color:var(--burgundy);">⚠️ Overdue</span>
+                                }
+                                else
+                                {
+                                    <span class="badge b-borrow">Active</span>
+                                }
+                            </td>
+                            <td data-label="Action">
+                                @if (r.Status == "active" || r.Status == "overdue")
+                                {
+                                    <button onclick="requestReturn(@r.Id)" class="btn btn-outline" style="font-size:12px;padding:4px 10px;">
+                                        📬 Request Return
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @Html.AntiForgeryToken()
+</div>
+
+<div id="toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;text-align:center;"></div>
+
+<script>
+        function requestReturn(borrowRecordId) {
+        if (!confirm('Request to return this book?')) return;
+        fetch('/Student/RequestReturn', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? ''
+            },
+            body: 'borrowRecordId=' + borrowRecordId
+        })
+        .then(r => r.json())
+        .then(data => {
+            showToast(data.message, data.success);
+            if (data.success) {
+                const btn = document.querySelector(`button[onclick="requestReturn(${borrowRecordId})"]`);
+                if (btn) {
+                    btn.textContent = '✅ Requested';
+                    btn.disabled = true;
+                    btn.style.cursor = 'not-allowed';
+                    btn.style.opacity = '0.7';
+                    btn.style.borderColor = '#4a7a5c';
+                    btn.style.color = '#4a7a5c';
+                }
+            }
+        })
+        .catch(() => showToast('Something went wrong.', false));
+    }
+
+    function showToast(msg, success) {
+        var t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.background = success ? '#2d6a4f' : '#c0392b';
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3500);
+    }
+</script>

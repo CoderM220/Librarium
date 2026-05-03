@@ -1,0 +1,433 @@
+﻿@model Librarium.Models.Student
+@{
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    ViewBag.Title = "Profile";
+    ViewBag.PageName = "Profile";
+}
+
+<style>
+    .pro-hero {
+        background: linear-gradient(135deg,#0d1f3c 0%,#1a3a6c 100%);
+        border-radius: 16px;
+        padding: 24px 28px;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .pro-ava {
+        width: 62px;
+        height: 62px;
+        border-radius: 50%;
+        background: #1a4a8a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: 600;
+        color: #7ab8f5;
+        border: 2px solid rgba(100,160,240,0.3);
+        flex-shrink: 0;
+    }
+
+    .pro-type {
+        font-size: 10px;
+        letter-spacing: 0.15em;
+        color: #6a8aaa;
+        text-transform: uppercase;
+        margin: 0 0 3px;
+    }
+
+    .pro-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: #7ab8f5;
+        margin: 0 0 3px;
+    }
+
+    .pro-email {
+        font-size: 12px;
+        color: #5a8ab0;
+        margin: 0;
+    }
+
+    .pro-stats {
+        display: grid;
+        grid-template-columns: repeat(3,1fr);
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .pro-stat {
+        background: #fff;
+        border: 1px solid var(--paper);
+        border-radius: 12px;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+    }
+
+        .pro-stat:hover {
+            background: var(--paper);
+        }
+
+    .pro-stat-v {
+        font-size: 22px;
+        font-weight: 700;
+        margin: 0 0 2px;
+        font-family: 'Playfair Display',serif;
+    }
+
+    .pro-stat-l {
+        font-size: 11px;
+        color: var(--dust);
+        margin: 0;
+    }
+
+    .pro-card {
+        background: #fff;
+        border: 1px solid var(--paper);
+        border-radius: 14px;
+        overflow: hidden;
+        max-width: 560px;
+    }
+
+    .pro-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--paper);
+    }
+
+    .pro-tab {
+        flex: 1;
+        padding: 12px;
+        font-size: 13px;
+        font-weight: 500;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        color: #888;
+        font-family: 'DM Sans',sans-serif;
+    }
+
+        .pro-tab.on {
+            border-bottom-color: var(--blue);
+            color: var(--blue);
+        }
+
+    .pro-body {
+        padding: 20px 24px;
+    }
+
+    .pro-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--paper);
+        font-size: 13px;
+    }
+
+        .pro-row:last-child {
+            border-bottom: none;
+        }
+
+    .pro-lbl {
+        color: var(--dust);
+        font-size: 11px;
+    }
+
+    .pro-val {
+        color: var(--ink);
+        font-weight: 500;
+    }
+
+    .pro-edit-btn {
+        font-size: 11px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        border: 1px solid var(--paper);
+        background: transparent;
+        color: var(--dust);
+        cursor: pointer;
+        font-family: 'DM Sans',sans-serif;
+    }
+
+    .pro-expand {
+        border-top: 1px solid var(--paper);
+        padding: 18px 24px;
+        display: none;
+    }
+
+        .pro-expand.open {
+            display: block;
+        }
+
+    .pro-section-lbl {
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--dust);
+        margin: 0 0 10px;
+    }
+
+    .pro-chpw-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--blue);
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        margin: 12px 0 0;
+        font-family: 'DM Sans',sans-serif;
+    }
+
+    .pro-chpw-section {
+        display: none;
+        padding-top: 10px;
+    }
+
+        .pro-chpw-section.open {
+            display: block;
+        }
+
+    .pro-arrow {
+        display: inline-block;
+        transition: transform 0.2s;
+        font-style: normal;
+        font-size: 11px;
+    }
+
+        .pro-arrow.open {
+            transform: rotate(180deg);
+        }
+
+    .pro-setting-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--paper);
+    }
+
+        .pro-setting-row:last-child {
+            border-bottom: none;
+        }
+
+    .pro-setting-lbl {
+        font-size: 13px;
+        color: var(--ink);
+    }
+
+    .pro-setting-sub {
+        font-size: 11px;
+        color: var(--dust);
+        margin-top: 1px;
+    }
+
+    .pro-toggle {
+        width: 36px;
+        height: 20px;
+        border-radius: 10px;
+        position: relative;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background 0.2s;
+    }
+
+        .pro-toggle.on {
+            background: var(--blue);
+        }
+
+        .pro-toggle.off {
+            background: var(--paper);
+        }
+
+    .pro-knob {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        position: absolute;
+        top: 2px;
+        transition: left 0.2s;
+    }
+
+    .pro-toggle.on .pro-knob {
+        left: 18px;
+    }
+
+    .pro-toggle.off .pro-knob {
+        left: 2px;
+    }
+
+    .pro-app-lbl {
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--dust);
+        margin: 14px 0 8px;
+    }
+
+        .pro-app-lbl:first-child {
+            margin-top: 0;
+        }
+</style>
+
+<div class="pro-hero">
+    <div class="pro-ava">@Model.FullName.Substring(0, Math.Min(2, Model.FullName.Length)).ToUpper()</div>
+    <div>
+        <p class="pro-type">Account Type — Student</p>
+        <p class="pro-name">@Model.FullName</p>
+        <p class="pro-email">@Model.Email</p>
+    </div>
+</div>
+
+<div class="pro-stats">
+    <a href="/Student/MyBorrows" class="pro-stat">
+        <p class="pro-stat-v" style="color:var(--ink);">@ViewBag.TotalBooks</p>
+        <p class="pro-stat-l">Total Books</p>
+    </a>
+    <a href="/Student/MyBorrows" class="pro-stat">
+        <p class="pro-stat-v" style="color:var(--blue);">@ViewBag.MyBorrows</p>
+        <p class="pro-stat-l">My Borrows</p>
+    </a>
+    <a href="/Student/MyBookings" class="pro-stat">
+        <p class="pro-stat-v" style="color:var(--sage);">@ViewBag.MyBookings</p>
+        <p class="pro-stat-l">My Bookings</p>
+    </a>
+</div>
+
+<div class="pro-card">
+    <div class="pro-tabs">
+        <button class="pro-tab on" id="tab-info" onclick="showTab('info')">Account Info</button>
+        <button class="pro-tab" id="tab-settings" onclick="showTab('settings')">Settings</button>
+    </div>
+
+    <div id="pane-info">
+        <div class="pro-body">
+            <div class="pro-row"><span class="pro-lbl">Full Name</span><span class="pro-val">@Model.FullName</span></div>
+            <div class="pro-row"><span class="pro-lbl">Email</span><span class="pro-val">@Model.Email</span></div>
+            <div class="pro-row"><span class="pro-lbl">Registered</span><span class="pro-val">@Model.RegisteredAt.ToString("MMM d, yyyy")</span></div>
+            <div class="pro-row" style="border-bottom:none;">
+                <span class="pro-lbl">Edit Profile</span>
+                <button class="pro-edit-btn" onclick="toggleEdit()">Edit ✏️</button>
+            </div>
+        </div>
+
+        <div class="pro-expand" id="edit-expand">
+            @if (TempData["PwSuccess"] != null)
+            {
+                <div style="background:rgba(74,122,92,0.1);border:1px solid rgba(74,122,92,0.25);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--sage);margin-bottom:14px;">✅ @TempData["PwSuccess"]</div>
+            }
+            @if (TempData["PwError"] != null)
+            {
+                <div style="background:rgba(122,32,32,0.08);border:1px solid rgba(122,32,32,0.2);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--burgundy);margin-bottom:14px;">❌ @TempData["PwError"]</div>
+            }
+            <form method="post" action="/Student/ChangePassword">
+                @Html.AntiForgeryToken()
+                <p class="pro-section-lbl">Edit Profile</p>
+                <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    <input class="form-input" name="firstName" value="@Model.FirstName" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <input class="form-input" name="lastName" value="@Model.LastName" />
+                </div>
+                <div style="height:1px;background:var(--paper);margin:16px 0 4px;"></div>
+                <button type="button" class="pro-chpw-btn" onclick="toggleChpw()">
+                    <span class="pro-arrow" id="chpwArrow">▼</span> Change Password
+                </button>
+                <div class="pro-chpw-section" id="chpwSection">
+                    <div class="form-group" style="margin-top:10px;">
+                        <label class="form-label">Current Password</label>
+                        <div style="position:relative;">
+                            <input class="form-input" id="curPw" name="currentPassword" type="password" placeholder="Enter current password" style="padding-right:42px;" />
+                            <button type="button" onclick="togglePw('curPw',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;color:var(--dust);padding:0;">👁️</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">New Password</label>
+                        <div style="position:relative;">
+                            <input class="form-input" id="newPw" name="newPassword" type="password" placeholder="Min 8 characters" style="padding-right:42px;" />
+                            <button type="button" onclick="togglePw('newPw',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;color:var(--dust);padding:0;">👁️</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm New Password</label>
+                        <div style="position:relative;">
+                            <input class="form-input" id="conPw" name="confirmPassword" type="password" placeholder="Repeat new password" style="padding-right:42px;" />
+                            <button type="button" onclick="togglePw('conPw',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;color:var(--dust);padding:0;">👁️</button>
+                        </div>
+                    </div>
+                    <a href="/Auth/ForgotPassword" style="font-size:12px;color:var(--blue);display:inline-block;margin-bottom:14px;">Forgot password?</a>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top:8px;">💾 Save Changes</button>
+                <button type="button" onclick="toggleEdit()" class="btn btn-outline" style="margin-top:8px;margin-left:8px;">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="pane-settings" style="display:none;">
+        <div class="pro-body">
+            <p class="pro-app-lbl">Appearance</p>
+            <div class="pro-setting-row">
+                <div><div class="pro-setting-lbl">Dark Mode</div><div class="pro-setting-sub">Switch to dark theme</div></div>
+                <div class="pro-toggle off" id="darkToggle" onclick="toggleSetting('darkToggle')"><div class="pro-knob"></div></div>
+            </div>
+            <p class="pro-app-lbl">Notifications</p>
+            <div class="pro-setting-row">
+                <div><div class="pro-setting-lbl">Booking Updates</div><div class="pro-setting-sub">Alert when booking is approved or rejected</div></div>
+                <div class="pro-toggle on" id="bookingToggle" onclick="toggleSetting('bookingToggle')"><div class="pro-knob"></div></div>
+            </div>
+            <div class="pro-setting-row">
+                <div><div class="pro-setting-lbl">Due Date Reminders</div><div class="pro-setting-sub">Remind me 3 days before due date</div></div>
+                <div class="pro-toggle on" id="dueToggle" onclick="toggleSetting('dueToggle')"><div class="pro-knob"></div></div>
+            </div>
+            <div class="pro-setting-row">
+                <div><div class="pro-setting-lbl">Overdue Alerts</div><div class="pro-setting-sub">Notify when a book becomes overdue</div></div>
+                <div class="pro-toggle off" id="overdueToggle" onclick="toggleSetting('overdueToggle')"><div class="pro-knob"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(name) {
+        document.getElementById('pane-info').style.display = name === 'info' ? 'block' : 'none';
+        document.getElementById('pane-settings').style.display = name === 'settings' ? 'block' : 'none';
+        document.getElementById('tab-info').classList.toggle('on', name === 'info');
+        document.getElementById('tab-settings').classList.toggle('on', name === 'settings');
+    }
+    function toggleEdit() {
+        document.getElementById('edit-expand').classList.toggle('open');
+    }
+    function toggleChpw() {
+        document.getElementById('chpwSection').classList.toggle('open');
+        document.getElementById('chpwArrow').classList.toggle('open');
+    }
+    function togglePw(id, btn) {
+        var inp = document.getElementById(id);
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+        btn.textContent = inp.type === 'password' ? '👁️' : '🙈';
+    }
+       function toggleSetting(id) {
+        const el = document.getElementById(id);
+        el.classList.toggle('on');
+        el.classList.toggle('off');
+        if (id === 'darkToggle') toggleDarkMode();
+    }
+    @if (TempData["PwError"] != null || TempData["PwSuccess"] != null)
+    {
+            <text>document.getElementById('edit-expand').classList.add('open');</text>
+    }
+        if (localStorage.getItem('libDarkStudent') === '1') {
+        const dt = document.getElementById('darkToggle');
+        if (dt) { dt.classList.replace('off','on'); }
+    }
+</script>

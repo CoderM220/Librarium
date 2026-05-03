@@ -1,0 +1,249 @@
+﻿@model IEnumerable<Librarium.Models.Shelf>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewBag.Title = "Shelves";
+    ViewBag.PageName = "Shelves";
+
+    var shelfList = Model.ToList();
+    int totalAlmirahs = shelfList.Count(s => s.ShelfType == "almirah");
+    int totalRacks = shelfList.Count(s => s.ShelfType == "rack");
+    int booksStored = shelfList.Sum(s => s.Books.Count);
+    int emptyShelves = shelfList.Count(s => s.Books.Count == 0);
+}
+
+<div class="stats-row" style="margin-bottom:16px;">
+    <div class="stat-card sc-amber">
+        <div class="stat-ico">🗄️</div>
+        <div class="stat-val">@totalAlmirahs</div>
+        <div class="stat-lbl">Total Almirahs</div>
+    </div>
+    <div class="stat-card sc-burg">
+        <div class="stat-ico">📦</div>
+        <div class="stat-val">@totalRacks</div>
+        <div class="stat-lbl">Total Racks</div>
+    </div>
+    <div class="stat-card sc-sage">
+        <div class="stat-ico">📚</div>
+        <div class="stat-val">@booksStored</div>
+        <div class="stat-lbl">Books Stored</div>
+    </div>
+    <div class="stat-card sc-dust">
+        <div class="stat-ico">🔲</div>
+        <div class="stat-val">@emptyShelves</div>
+        <div class="stat-lbl">Empty Shelves</div>
+    </div>
+</div>
+
+<div style="display:flex;gap:16px;align-items:flex-start;">
+
+    <div class="panel" style="flex:1;">
+        <div class="panel-header">
+            <span class="panel-title">🗺️ Library Floor Plan</span>
+            <div style="display:flex;gap:12px;align-items:center;font-size:12px;">
+                <span style="display:flex;align-items:center;gap:4px;">
+                    <span style="width:12px;height:12px;border-radius:2px;background:var(--amber);display:inline-block;"></span> Almirah
+                </span>
+                <span style="display:flex;align-items:center;gap:4px;">
+                    <span style="width:12px;height:12px;border-radius:2px;background:var(--sage);display:inline-block;"></span> Rack
+                </span>
+                <span style="display:flex;align-items:center;gap:4px;">
+                    <span style="width:12px;height:12px;border-radius:2px;background:var(--burgundy);display:inline-block;"></span> Selected
+                </span>
+            </div>
+        </div>
+        <div id="floorGrid" style="
+            display:grid;
+            grid-template-columns:repeat(10,1fr);
+            grid-template-rows:repeat(10,44px);
+            gap:3px;
+            padding:8px 0;">
+        </div>
+    </div>
+
+    
+    <div class="panel" style="width:260px;flex-shrink:0;min-height:400px;display:flex;flex-direction:column;">
+        <div class="panel-header" style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:10px;">
+            <div>
+                <div id="detName" style="font-size:15px;font-weight:600;color:var(--text-primary);">No shelf selected</div>
+                <div id="detSub" style="font-size:12px;color:var(--text-muted);margin-top:2px;">Tap any shelf on the map</div>
+                <div id="detBadge" style="margin-top:6px;"></div>
+            </div>
+        </div>
+        <div id="bookList" style="flex:1;overflow-y:auto;">
+            <div style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px 0;">
+                Select a shelf to see its books
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const shelves = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        shelfList.Select(s => new {
+            id = s.Id,
+            code = s.ShelfCode,
+            type = s.ShelfType,
+            col = s.GridCol,
+            row = s.GridRow,
+            books = s.Books.Select(b => new {
+                id = b.Id,
+                title = b.Title,
+                author = b.Author,
+                status = b.Status
+            }).ToList()
+        })
+    ));
+
+    let selectedId = null;
+
+    function renderGrid() {
+        const grid = document.getElementById('floorGrid');
+        grid.innerHTML = '';
+        shelves.forEach(s => {
+          const hasBooks = s.books && s.books.length > 0;
+            const isSelected = selectedId === s.id;
+
+            let bg, border, color;
+            if (isSelected) {
+                bg = 'var(--burgundy)';
+                border = 'var(--burgundy)';
+                color = '#fff';
+            } else if (hasBooks) {
+                bg = s.type === 'rack' ? 'var(--sage)' : 'var(--amber)';
+                border = s.type === 'rack' ? 'var(--sage)' : 'var(--amber)';
+                color = '#fff';
+            } else {
+                bg = s.type === 'rack' ? 'rgba(107,142,107,0.15)' : 'rgba(184,142,74,0.15)';
+                border = s.type === 'rack' ? 'rgba(107,142,107,0.4)' : 'rgba(184,142,74,0.4)';
+                color = 'var(--text-muted)';
+            }
+
+            const cell = document.createElement('div');
+            cell.style.cssText = `
+                grid-column:${s.col};
+                grid-row:${s.row};
+                background:${bg};
+                border:1.5px solid ${border};
+                border-radius:4px;
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                justify-content:center;
+                cursor:pointer;
+                font-size:8px;
+                font-weight:600;
+                color:${color};
+                line-height:1.3;
+                transition:opacity 0.15s;
+            `;
+            cell.innerHTML = `
+                <span>${s.code}</span>
+                ${hasBooks ? `<span style="font-size:7px;opacity:0.85;">${s.books.length}bk</span>` : ''}
+            `;
+            cell.onmouseover = () => { if (selectedId !== s.id) cell.style.opacity = '0.75'; };
+            cell.onmouseout = () => { cell.style.opacity = '1'; };
+            cell.onclick = () => selectShelf(s.id);
+            grid.appendChild(cell);
+        });
+    }
+
+    function selectShelf(id) {
+        selectedId = id;
+        renderGrid();
+
+        const s = shelves.find(x => x.id === id);
+        const typeName = s.type === 'rack' ? 'Rack' : 'Almirah';
+        const badgeColor = s.type === 'rack' ? 'var(--sage)' : 'var(--amber)';
+
+        document.getElementById('detName').textContent = typeName + ' ' + s.code;
+        document.getElementById('detSub').textContent = s.books.length + ' book' + (s.books.length !== 1 ? 's' : '') + ' stored here';
+        document.getElementById('detBadge').innerHTML = `
+            <span style="
+                display:inline-block;padding:2px 10px;border-radius:20px;
+                font-size:11px;font-weight:500;
+                background:${badgeColor}22;color:${badgeColor};
+                border:1px solid ${badgeColor};">
+                ${typeName}
+            </span>`;
+
+        if (s.books.length === 0) {
+            document.getElementById('bookList').innerHTML =
+                '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px 0;">No books stored here yet</div>';
+        } else {
+            document.getElementById('bookList').innerHTML = s.books.map(b => `
+                <div style="padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;"
+                    onclick="viewDetail(${b.id})"
+                    <div style="font-size:13px;font-weight:500;color:var(--text-primary);">${b.title}</div>
+                    <div style="font-size:11px;color:var(--text-muted);">${b.author}</div>
+                    <span style="font-size:10px;padding:1px 7px;border-radius:10px;margin-top:3px;display:inline-block;
+                        background:${b.status === 'available' ? 'rgba(107,142,107,0.15)' : 'rgba(139,60,60,0.15)'};
+                        color:${b.status === 'available' ? 'var(--sage)' : 'var(--burgundy)'};">
+                        ${b.status}
+                    </span>
+                </div>`).join('');
+        }
+    }
+
+    renderGrid();
+    function viewDetail(id) {
+    fetch(`/Admin/BookDetail?id=${id}`)
+        .then(r => r.json())
+        .then(b => {
+            document.getElementById('shelfModalContent').innerHTML = `
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
+                    ${b.coverUrl
+                        ? `<img src="${b.coverUrl}" style="height:80px;border-radius:6px;object-fit:cover;" />`
+                        : `<div style="font-size:48px;">${b.emoji}</div>`}
+                    <div>
+                        <div style="font-size:18px;font-weight:700;color:var(--text-primary);">${b.title}</div>
+                        <div style="font-size:13px;color:var(--text-muted);margin-top:2px;">${b.author}</div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+                    <div style="background:var(--bg-secondary);border-radius:8px;padding:10px 14px;">
+                        <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">YEAR</div>
+                        <div style="font-size:13px;font-weight:500;">${b.year || '—'}</div>
+                    </div>
+                    <div style="background:var(--bg-secondary);border-radius:8px;padding:10px 14px;">
+                        <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">ISBN</div>
+                        <div style="font-size:13px;font-weight:500;">${b.isbn || '—'}</div>
+                    </div>
+                    <div style="background:var(--bg-secondary);border-radius:8px;padding:10px 14px;">
+                        <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">COPIES</div>
+                        <div style="font-size:13px;font-weight:500;">${b.availableCopies} / ${b.copies}</div>
+                    </div>
+                    <div style="background:var(--bg-secondary);border-radius:8px;padding:10px 14px;">
+                        <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">STATUS</div>
+                        <div style="font-size:13px;font-weight:500;color:${b.status === 'available' ? 'var(--sage)' : 'var(--burgundy)'};">
+                            ${b.status === 'available' ? '✅ Available' : '📤 Borrowed'}
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <a href="/Admin/EditBook/${b.id}" class="btn btn-primary" style="font-size:13px;">✏️ Edit</a>
+                    <button onclick="closeShelfModal()" class="btn btn-outline" style="font-size:13px;">Close</button>
+                </div>`;
+            document.getElementById('shelfDetailModal').style.display = 'flex';
+        });
+}
+
+function closeShelfModal() {
+    document.getElementById('shelfDetailModal').style.display = 'none';
+}
+</script>
+<div id="shelfDetailModal" style="
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,0.45);z-index:1000;
+    align-items:center;justify-content:center;">
+    <div style="
+        background:var(--cream);border-radius:16px;
+        padding:28px 32px;width:460px;max-width:95vw;
+        box-shadow:0 8px 40px rgba(0,0,0,0.2);position:relative;">
+        <button onclick="closeShelfModal()" style="
+            position:absolute;top:14px;right:16px;
+            background:none;border:none;font-size:20px;
+            cursor:pointer;color:var(--text-muted);">✕</button>
+        <div id="shelfModalContent"></div>
+    </div>
+</div>

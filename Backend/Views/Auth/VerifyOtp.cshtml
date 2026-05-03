@@ -1,0 +1,76 @@
+﻿@{
+    ViewData["Title"] = "Verify OTP";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <h4 class="text-center mb-1">Verify Your Email</h4>
+                    <p class="text-center text-muted mb-3">
+                        A 6-digit OTP has been sent to<br />
+                        <strong>@ViewBag.MaskedEmail</strong>
+                    </p>
+
+                    @if (ViewBag.Error != null)
+                    {
+                        <div class="alert alert-danger">@ViewBag.Error</div>
+                    }
+                    @if (TempData["ResendSuccess"] != null)
+                    {
+                        <div class="alert alert-success">@TempData["ResendSuccess"]</div>
+                    }
+                    @if (TempData["ResendError"] != null)
+                    {
+                        <div class="alert alert-warning">@TempData["ResendError"]</div>
+                    }
+
+                    <form method="post" action="/Auth/VerifyOtp">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label">OTP Code</label>
+                            <input type="text" name="otp" class="form-control text-center"
+                                   maxlength="6" placeholder="------" required autofocus />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Verify</button>
+                    </form>
+
+                    <hr />
+
+                    <form method="post" action="/Auth/ResendOtp">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-secondary w-100"
+                                id="resendBtn" onclick="startCooldown()">
+                            Resend OTP
+                        </button>
+                    </form>
+                    <p class="text-center text-muted mt-2" id="cooldownMsg" style="display:none; font-size:0.85rem;">
+                        You can resend in <span id="countdown">60</span>s
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function startCooldown() {
+        const btn = document.getElementById('resendBtn');
+        const msg = document.getElementById('cooldownMsg');
+        const counter = document.getElementById('countdown');
+        btn.disabled = true;
+        msg.style.display = 'block';
+        let seconds = 60;
+        const interval = setInterval(() => {
+            seconds--;
+            counter.textContent = seconds;
+            if (seconds <= 0) {
+                clearInterval(interval);
+                btn.disabled = false;
+                msg.style.display = 'none';
+            }
+        }, 1000);
+    }
+</script>
