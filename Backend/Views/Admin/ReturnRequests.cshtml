@@ -1,0 +1,88 @@
+﻿@model List<Librarium.Models.ReturnRequest>
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewBag.Title = "Return Requests";
+    ViewBag.PageName = "ReturnRequests";
+}
+<style>
+    .return-card {
+        background: #fff;
+        border: 1px solid var(--paper);
+    }
+
+    body.dark .return-card {
+        background: #1e1a16 !important;
+        border-color: #2e2720;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.3);
+    }
+</style>
+
+<div style="max-width:900px;margin:0 auto;padding:20px;">
+    <h3 style="margin-bottom:20px;">📬 Return Requests</h3>
+
+    @if (!Model.Any())
+    {
+        <div style="text-align:center;color:#aaa;padding:60px 0;">No return requests yet.</div>
+    }
+    else
+    {
+        @foreach (var r in Model)
+        {
+            <div id="ret-row-@r.Id" class="return-card"
+                 style="border-radius:12px;padding:16px 20px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,0.07);">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                    <div>
+                        <div style="font-weight:600;font-size:15px;">@r.BookTitle</div>
+                        <div style="font-size:13px;color:#555;margin-top:2px;">👤 @r.StudentName — @r.StudentEmail</div>
+                        <div style="font-size:12px;color:#888;margin-top:2px;">Requested: @r.RequestedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        @if (r.Status == "pending")
+                        {
+                            <span style="background:#fff3cd;color:#856404;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">⏳ Pending</span>
+                            <button onclick="handleReturn(@r.Id, 'approve')" style="background:#2d6a4f;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;">✅ Approve</button>
+                            <button onclick="handleReturn(@r.Id, 'reject')" style="background:#c0392b;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;">❌ Reject</button>
+                        }
+                        else if (r.Status == "approved")
+                        {
+                            <span style="background:#d1e7dd;color:#0a3622;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">✅ Approved</span>
+                        }
+                        else
+                        {
+                            <span style="background:#f8d7da;color:#842029;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">❌ Rejected</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<div id="toast" style="display:none;position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:10px;color:#fff;font-size:14px;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,0.15);"></div>
+
+@Html.AntiForgeryToken()
+
+<script>
+    function handleReturn(id, action) {
+        var url = action === 'approve' ? '/Admin/ApproveReturn' : '/Admin/RejectReturn';
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? ''
+            },
+            body: 'id=' + id
+        })
+        .then(r => r.json())
+        .then(data => { showToast(data.message, data.success); if (data.success) setTimeout(() => location.reload(), 1500); })
+        .catch(() => showToast('Something went wrong.', false));
+    }
+
+    function showToast(msg, success) {
+        var t = document.getElementById('toast');
+        t.textContent = msg;
+        t.style.background = success ? '#2d6a4f' : '#c0392b';
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3000);
+    }
+</script>

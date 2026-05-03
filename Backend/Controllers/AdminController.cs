@@ -13,12 +13,13 @@ namespace Librarium.Controllers
     {
         private readonly LibrariumDbContext _db;
         private readonly Librarium.Services.EmailService _email;
-        public AdminController(LibrariumDbContext db, Librarium.Services.EmailService email)
+        private readonly Librarium.Services.PushNotificationService _push;
+        public AdminController(LibrariumDbContext db, Librarium.Services.EmailService email, Librarium.Services.PushNotificationService push)
         {
             _db = db;
             _email = email;
+            _push = push;
         }
-
         // ── DASHBOARD ──
         public IActionResult Index()
         {
@@ -388,11 +389,15 @@ namespace Librarium.Controllers
             var requests = _db.BookingRequests
                 .OrderByDescending(r => r.RequestedAt)
                 .ToList();
+            return View(requests);
+        }
+
+        public IActionResult ReturnRequests()
+        {
             var returnRequests = _db.ReturnRequests
                 .OrderByDescending(r => r.RequestedAt)
                 .ToList();
-            ViewBag.ReturnRequests = returnRequests;
-            return View(requests);
+            return View(returnRequests);
         }
         [HttpPost]
         public IActionResult ApproveReturn(int id)
@@ -459,6 +464,18 @@ namespace Librarium.Controllers
             _db.SaveChanges();
             _ = Task.Run(() => _email.SendBookingStatusAsync(
             request.StudentEmail, request.StudentName, request.BookTitle, "approved", adminNote));
+            _ = Task.Run(() => _push.SendToStudent(
+            request.StudentId, "✅ Booking Approved", $"Your request for '{request.BookTitle}' has been approved! Please collect it within 2 days.", "booking-approved"));
+            _db.Notifications.Add(new Notification
+            {
+                StudentId = request.StudentId,
+                Title = "Booking Approved",
+                Message = $"Your request for '{request.BookTitle}' has been approved! Please collect it within 2 days.",
+                Type = "booking-approved",
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            });
+            _db.SaveChanges();
             return Json(new { success = true, message = "Booking approved!" });
         }
 
@@ -472,6 +489,18 @@ namespace Librarium.Controllers
             _db.SaveChanges();
             _ = Task.Run(() => _email.SendBookingStatusAsync(
             request.StudentEmail, request.StudentName, request.BookTitle, "rejected", adminNote));
+            _ = Task.Run(() => _push.SendToStudent(
+            request.StudentId, "❌ Booking Rejected", $"Your request for '{request.BookTitle}' was not approved.", "booking-rejected"));
+            _db.Notifications.Add(new Notification
+            {
+                StudentId = request.StudentId,
+                Title = "Booking Rejected",
+                Message = $"Your request for '{request.BookTitle}' was not approved.",
+                Type = "booking-rejected",
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            });
+            _db.SaveChanges();
             return Json(new { success = true, message = "Booking rejected." });
         }
         // ── FORGOT PASSWORD GET ──

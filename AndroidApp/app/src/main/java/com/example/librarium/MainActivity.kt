@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
         }
         webView.loadUrl("http://10.43.216.250:5059/Auth/StudentLogin")
 
-        // Back button navigates web history instead of closing the app
+
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (webView.canGoBack()) webView.goBack()

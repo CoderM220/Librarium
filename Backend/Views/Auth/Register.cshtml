@@ -77,10 +77,6 @@
         <div class="login-right">
             <div class="login-form-title">Create Account</div>
             <div class="login-form-sub">Join the library today</div>
-            @if (ViewBag.Error != null)
-            {
-                <div class="login-error" style="display:block">❌ @ViewBag.Error</div>
-            }
             <div id="matchError" class="login-error">❌ Passwords do not match.</div>
             <form method="post" action="/Auth/Register" onsubmit="return validateForm()">
                 @Html.AntiForgeryToken()
@@ -97,6 +93,10 @@
                 <div class="form-group">
                     <label class="form-label">Email</label>
                     <input class="form-input" name="email" type="email" placeholder="your@email.com" required />
+                    @if (ViewBag.Error != null && ViewBag.ErrorField == "email")
+                    {
+                        <div style="color:#7a2020;font-size:12px;margin-top:5px;">❌ @ViewBag.Error</div>
+                    }
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>

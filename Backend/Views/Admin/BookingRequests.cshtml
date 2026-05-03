@@ -4,12 +4,9 @@
     ViewBag.Title = "Booking Requests";
     ViewBag.PageName = "BookingRequests";
 
-    var returnRequests = (ViewBag.ReturnRequests as IEnumerable<Librarium.Models.ReturnRequest>)?.ToList() ?? new List<Librarium.Models.ReturnRequest>();
-
     // Build unique member names from both lists for autocomplete
     var memberNames = Model
         .Select(r => r.StudentName)
-        .Concat(returnRequests.Select(r => r.StudentName))
         .Where(n => !string.IsNullOrWhiteSpace(n))
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .OrderBy(n => n)
@@ -41,11 +38,21 @@
         background: #1e1a16;
         border-color: #2e2720;
     }
+
+    #filterChip {
+        background: var(--ink);
+        color: #fff;
+    }
+
+    body.dark #filterChip {
+        background: #2e2720;
+        color: #e8ddd0;
+    }
 </style>
 @* ── Search Bar ── *@
 <div style="max-width:900px;margin:0 auto 0;padding:20px 20px 0;">
     <div style="position:relative;margin-bottom:24px;">
-        <div id="searchWrap" style="display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--paper);border-radius:10px;padding:10px 16px;transition:all 0.2s;">
+        <div id="searchWrap" style="display:flex;align-items:center;gap:10px;border:1.5px solid var(--paper);border-radius:10px;padding:10px 16px;transition:all 0.2s;">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;">
                 <circle cx="6.5" cy="6.5" r="5" stroke="var(--dust)" stroke-width="1.3" />
                 <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="var(--dust)" stroke-width="1.3" stroke-linecap="round" />
@@ -58,11 +65,11 @@
             <button id="clearSearch" onclick="clearSearch()" style="display:none;background:none;border:none;cursor:pointer;font-size:16px;color:var(--dust);line-height:1;padding:0 2px;" aria-label="Clear">✕</button>
         </div>
 
-        <ul id="autocompleteList" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border:1.5px solid var(--paper);border-radius:10px;overflow:hidden;z-index:200;list-style:none;padding:4px 0;box-shadow:0 6px 20px rgba(26,18,9,0.1);">
+        <ul id="autocompleteList" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;border:1.5px solid var(--paper);border-radius:10px;overflow:hidden;z-index:200;list-style:none;padding:4px 0;box-shadow:0 6px 20px rgba(26,18,9,0.1);">
         </ul>
 
         <div id="activeFilter" style="display:none;margin-top:10px;">
-            <span id="filterChip" style="display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:#fff;border-radius:999px;padding:5px 14px;font-size:13px;font-family:'DM Sans',sans-serif;">
+            <span id="filterChip" style="display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:5px 14px;font-size:13px;font-family:'DM Sans',sans-serif;">
                 <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="white" stroke-width="1.3" /><path d="M2 14c0-3 2.7-5 6-5s6 2 6 5" stroke="white" stroke-width="1.3" stroke-linecap="round" /></svg>
                 <span id="filterChipName"></span>
                 <button onclick="clearFilter()" style="background:none;border:none;color:rgba(255,255,255,0.65);cursor:pointer;font-size:14px;padding:0;line-height:1;" aria-label="Remove filter">✕</button>
@@ -84,7 +91,7 @@
         @foreach (var r in Model)
         {
             <div id="row-@r.Id" class="request-card" data-member="@r.StudentName.ToLower()"
-                 style="background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,0.07);">
+                 style="border-radius:12px;padding:16px 20px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,0.07);">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
                     <div>
                         <div style="font-weight:600;font-size:15px;">@r.BookTitle</div>
@@ -117,48 +124,6 @@
         }
 
         <div id="bookingEmpty" style="display:none;text-align:center;color:#aaa;padding:40px 0;font-size:14px;">No booking requests for this member.</div>
-    }
-</div>
-
-@* ── Return Requests ── *@
-<div style="max-width:900px;margin:20px auto 0;padding:0 20px 20px;">
-    <h3 style="margin-bottom:20px;">📬 Return Requests</h3>
-    @if (!returnRequests.Any())
-    {
-        <div style="text-align:center;color:#aaa;padding:40px 0;">No return requests yet.</div>
-    }
-    else
-    {
-        @foreach (var r in returnRequests)
-        {
-            <div id="ret-row-@r.Id" class="return-card" data-member="@r.StudentName.ToLower()"
-                 style="background:#fff;border-radius:12px;padding:16px 20px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,0.07);">
-                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                    <div>
-                        <div style="font-weight:600;font-size:15px;">@r.BookTitle</div>
-                        <div style="font-size:13px;color:#555;margin-top:2px;">👤 @r.StudentName — @r.StudentEmail</div>
-                        <div style="font-size:12px;color:#888;margin-top:2px;">Requested: @r.RequestedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</div>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                        @if (r.Status == "pending")
-                        {
-                            <span style="background:#fff3cd;color:#856404;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">⏳ Pending</span>
-                            <button onclick="handleReturn(@r.Id, 'approve')" style="background:#2d6a4f;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;">✅ Approve</button>
-                            <button onclick="handleReturn(@r.Id, 'reject')" style="background:#c0392b;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;">❌ Reject</button>
-                        }
-                        else if (r.Status == "approved")
-                        {
-                            <span style="background:#d1e7dd;color:#0a3622;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">✅ Approved</span>
-                        }
-                        else
-                        {
-                            <span style="background:#f8d7da;color:#842029;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">❌ Rejected</span>
-                        }
-                    </div>
-                </div>
-            </div>
-        }
-        <div id="returnEmpty" style="display:none;text-align:center;color:#aaa;padding:40px 0;font-size:14px;">No return requests for this member.</div>
     }
 </div>
 

@@ -18,14 +18,14 @@
         width: 100%;
     }
 
-        .borrow-table tr {
-            background: #fff;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            padding: 14px 16px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-            border: 1px solid var(--paper);
-        }
+            .borrow-table tr {
+                background: var(--card-bg, #fff);
+                border-radius: 12px;
+                margin-bottom: 12px;
+                padding: 14px 16px;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+                border: 1px solid var(--paper);
+            }
 
         .borrow-table td {
             padding: 4px 0;
@@ -65,13 +65,27 @@
         background: transparent;
     }
 
-    .panel-header {
-        border-radius: 12px;
-        background: #fff;
-        margin-bottom: 12px;
-        border: 1px solid var(--paper);
+        .panel-header {
+            border-radius: 12px;
+            background: var(--card-bg, #fff);
+            margin-bottom: 12px;
+            border: 1px solid var(--paper);
+        }
+
     }
 
+    body.dark .borrow-table tr {
+        --card-bg: #1e1a14;
+        border-color: #3a2e1e;
+    }
+
+    body.dark .panel-header {
+        --card-bg: #1e1a14;
+        border-color: #3a2e1e;
+    }
+
+    body.dark .borrow-table td {
+        color: #d4c5a9;
     }
 </style>
 
@@ -142,7 +156,7 @@
                             <td data-label="Action">
                                 @if (r.Status == "active" || r.Status == "overdue")
                                 {
-                                    <button onclick="requestReturn(@r.Id)" class="btn btn-outline" style="font-size:12px;padding:4px 10px;">
+                                    <button data-id="@r.Id" class="btn btn-outline return-btn" style="font-size:12px;padding:4px 10px;">
                                         📬 Request Return
                                     </button>
                                 }
@@ -160,8 +174,16 @@
 <div id="toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;z-index:9999;text-align:center;"></div>
 
 <script>
-        function requestReturn(borrowRecordId) {
-        if (!confirm('Request to return this book?')) return;
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.return-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var borrowRecordId = this.getAttribute('data-id');
+                sendReturnRequest(btn, borrowRecordId);
+            });
+        });
+    });
+
+    function sendReturnRequest(btn, borrowRecordId) {
         fetch('/Student/RequestReturn', {
             method: 'POST',
             headers: {
@@ -174,15 +196,12 @@
         .then(data => {
             showToast(data.message, data.success);
             if (data.success) {
-                const btn = document.querySelector(`button[onclick="requestReturn(${borrowRecordId})"]`);
-                if (btn) {
-                    btn.textContent = '✅ Requested';
-                    btn.disabled = true;
-                    btn.style.cursor = 'not-allowed';
-                    btn.style.opacity = '0.7';
-                    btn.style.borderColor = '#4a7a5c';
-                    btn.style.color = '#4a7a5c';
-                }
+                btn.textContent = '✅ Requested';
+                btn.disabled = true;
+                btn.style.cursor = 'not-allowed';
+                btn.style.opacity = '0.7';
+                btn.style.borderColor = '#4a7a5c';
+                btn.style.color = '#4a7a5c';
             }
         })
         .catch(() => showToast('Something went wrong.', false));

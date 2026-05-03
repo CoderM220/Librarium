@@ -86,7 +86,7 @@
     <script>if(localStorage.getItem('libDarkStudent')==='1')document.body.classList.add('dark');</script>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <button class="hamburger hamburger-always" id="hamburgerBtn" aria-label="Toggle menu"
-            style="background:#fff;border:1px solid #E0D0B8;border-radius:8px;width:36px;height:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;position:fixed;top:14px;left:14px;z-index:190;">
+            style="background:#fff;border:1px solid #E0D0B8;border-radius:8px;width:36px;height:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;position:fixed;top:52px;left:14px;z-index:190;">
         <span style="display:block;width:16px;height:1.5px;background:#8B5E3C;border-radius:2px;"></span>
         <span style="display:block;width:16px;height:1.5px;background:#8B5E3C;border-radius:2px;"></span>
         <span style="display:block;width:16px;height:1.5px;background:#8B5E3C;border-radius:2px;"></span>
@@ -132,17 +132,46 @@
         </aside>
 
         <main class="main-content">
-            <div class="topbar" style="padding-left: 68px;">
+            <div class="topbar" style="padding-left: 68px; padding-top: 52px; display:flex; align-items:center; justify-content:space-between;">
                 <div class="topbar-title">@ViewBag.PageName</div>
-                @if (TempData["Success"] != null)
-                {
-                    <span style="background:var(--sage);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;">✅ @TempData["Success"]</span>
-                }
-                @if (TempData["Error"] != null)
-                {
-                    <span style="background:var(--burgundy);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;">❌ @TempData["Error"]</span>
-                }
+
+                <div style="display:flex;align-items:center;gap:16px;margin-right:16px;">
+                    @if (TempData["Success"] != null)
+                    {
+                        <span style="background:var(--sage);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;">✅ @TempData["Success"]</span>
+                    }
+                    @if (TempData["Error"] != null)
+                    {
+                        <span style="background:var(--burgundy);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;">❌ @TempData["Error"]</span>
+                    }
+
+                    @* ── Bell icon ── *@
+                    <a href="/Notifications/Index" style="position:relative;text-decoration:none;display:flex;align-items:center;" id="bellBtn">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8B5E3C" stroke-width="1.8">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                        </svg>
+                        <span id="bellDot" style="display:none;position:absolute;top:-3px;right:-3px;width:8px;height:8px;background:#E24B4A;border-radius:50%;"></span>
+                    </a>
+
+                    @* ── Student name + avatar ── *@
+                    <a href="/Student/Profile" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
+                        <div style="width:30px;height:30px;border-radius:50%;background:#FAEEDA;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#BA7517;">
+                            @(Context.Session.GetString("StudentName")?.Substring(0, 2).ToUpper())
+                        </div>
+                    </a>
+                </div>
             </div>
+
+            <script>
+                fetch('/Notifications/UnreadCount')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.count > 0) {
+                            document.getElementById('bellDot').style.display = 'block';
+                        }
+                    });
+            </script>
             <div class="content">@RenderBody()</div>
         </main>
     </div>
@@ -179,6 +208,45 @@
         const el = document.getElementById('darkToggle');
         if (el) { el.classList.toggle('on', on); el.classList.toggle('off', !on); }
         }
+    </script>
+    <script>
+        const VAPID_PUBLIC_KEY = 'BMSblYaYeT-41FKgcF-FE3CdaK4snPoSfqHEfl6tvO8Pk_P5jLfJhoAMUG2OPp4Z1Km9mpSP1T_ossr4-mFzID4';
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+            return outputArray;
+        }
+
+        async function registerPush() {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+            try {
+                const reg = await navigator.serviceWorker.register('/sw.js');
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') return;
+                const sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                });
+                const key = sub.getKey('p256dh');
+                const auth = sub.getKey('auth');
+                await fetch('/Student/SavePushSubscription', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        endpoint: sub.endpoint,
+                        p256dh: key ? btoa(String.fromCharCode(...new Uint8Array(key))) : '',
+                        auth: auth ? btoa(String.fromCharCode(...new Uint8Array(auth))) : ''
+                    })
+                });
+            } catch (e) { console.error('Push registration failed:', e); }
+        }
+
+        // Ask for permission after 2 seconds
+        setTimeout(registerPush, 2000);
     </script>
 </body>
 </html>

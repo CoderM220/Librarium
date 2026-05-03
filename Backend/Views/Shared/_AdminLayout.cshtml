@@ -2,7 +2,8 @@
 @inject Librarium.Models.LibrariumDbContext _db
 @{
     var overdueCount = _db.BorrowRecords.Count(r => r.Status == "overdue");
-    var pendingBookings = _db.BookingRequests.Count(r => r.Status == "pending") + _db.ReturnRequests.Count(r => r.Status == "pending");
+    var pendingBookings = _db.BookingRequests.Count(r => r.Status == "pending");
+    var pendingReturns = _db.ReturnRequests.Count(r => r.Status == "pending");
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -22,7 +23,7 @@
         <span style="display:block;width:16px;height:1.5px;background:#8B5E3C;border-radius:2px;"></span>
         <span style="display:block;width:16px;height:1.5px;background:#8B5E3C;border-radius:2px;"></span>
         <span style="display:block;width:16px;height:1.5px;background:#8B5E3C;border-radius:2px;"></span>
-        @if (overdueCount > 0 || pendingBookings > 0)
+        @if (overdueCount > 0 || pendingBookings > 0 || pendingReturns > 0)
         {
             <span style="position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:#e53935;border:1.5px solid #fff;"></span>
         }
@@ -60,12 +61,19 @@
                     }
                 </a>
                 <a class="nav-item @(ViewBag.PageName == "BookingRequests" ? "active" : "")" asp-controller="Admin" asp-action="BookingRequests">
-                   📋 Booking Requests
-                   @if (pendingBookings > 0)
-                   {
+                    📋 Booking Requests
+                    @if (pendingBookings > 0)
+                    {
                         <span style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#e53935;display:inline-block;flex-shrink:0;"></span>
-                   }
-</a>
+                    }
+                </a>
+                <a class="nav-item @(ViewBag.PageName == "ReturnRequests" ? "active" : "")" asp-controller="Admin" asp-action="ReturnRequests">
+                    📬 Return Requests
+                    @if (pendingReturns > 0)
+                    {
+                        <span style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#e53935;display:inline-block;flex-shrink:0;"></span>
+                    }
+                </a>
                 <span class="nav-label">Account</span>
                 <a class="nav-item @(ViewBag.PageName == "Profile" ? "active" : "")" asp-controller="Admin" asp-action="Profile">👤 Profile</a>
             </nav>

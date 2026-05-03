@@ -134,5 +134,31 @@ namespace Librarium.Services
             await smtp.SendAsync(message);
             await smtp.DisconnectAsync(true);
         }
+        public async Task<bool> IsEmailRealAsync(string email)
+        {
+            try
+            {
+                using var http = new HttpClient();
+                http.Timeout = TimeSpan.FromSeconds(8);
+
+                var apiKey = _config["EmailValidation:ApiKey"] ?? throw new InvalidOperationException("Email validation API key not configured.");
+                var url = $"https://emailreputation.abstractapi.com/v1/?api_key={apiKey}&email={Uri.EscapeDataString(email)}";
+                var response = await http.GetStringAsync(url);
+
+                var json = System.Text.Json.JsonDocument.Parse(response).RootElement;
+
+                // Correct property paths based on actual API response
+                var status = json.GetProperty("email_deliverability").GetProperty("status").GetString();
+                var isSmtpValid = json.GetProperty("email_deliverability").GetProperty("is_smtp_valid").GetBoolean();
+                var isFormatValid = json.GetProperty("email_deliverability").GetProperty("is_format_valid").GetBoolean();
+                var isDisposable = json.GetProperty("email_quality").GetProperty("is_disposable").GetBoolean();
+
+                return isFormatValid && isSmtpValid && status == "deliverable" && !isDisposable;
+            }
+            catch
+            {
+                return true;
+            }
+        }
     }
 }

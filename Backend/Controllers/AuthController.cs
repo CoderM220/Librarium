@@ -70,13 +70,23 @@ namespace Librarium.Controllers
         // POST /Auth/Register
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Register(string firstName, string lastName, string email, string password)
+        public async Task<IActionResult> Register(string firstName, string lastName, string email, string password)
         {
             if (_db.Students.Any(s => s.Email == email))
             {
                 ViewBag.Error = "An account with this email already exists.";
                 return View();
             }
+
+            // ✅ Validate email is real
+            var emailIsReal = await _email.IsEmailRealAsync(email);
+            if (!emailIsReal)
+            {
+                ViewBag.Error = "Invalid or non-existent email address. Please use a real email.";
+                ViewBag.ErrorField = "email";
+                return View();
+            }
+
             var otp = new Random().Next(100000, 999999).ToString();
             var student = new Student
             {

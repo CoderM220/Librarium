@@ -1,10 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Librarium.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // ── DATABASE ──
-builder.Services.AddDbContext<Librarium.Models.LibrariumDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("LibrariumDb")));
-
+builder.Services.AddDbContext<LibrariumDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 // ── SESSION ──
 builder.Services.AddSession(options =>
 {
@@ -17,6 +17,7 @@ builder.Services.AddSession(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<Librarium.Services.EmailService>();
 builder.Services.AddHostedService<Librarium.Services.ReminderService>();
+builder.Services.AddScoped<Librarium.Services.PushNotificationService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

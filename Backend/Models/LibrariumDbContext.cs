@@ -31,9 +31,9 @@ namespace Librarium.Models
         public DbSet<AdminUser> AdminUsers { get; set; }
         public DbSet<BookingRequest> BookingRequests { get; set; }
         public DbSet<Shelf> Shelves { get; set; }
-
         public DbSet<ReturnRequest> ReturnRequests { get; set; }
-
+        public DbSet<PushSubscription> PushSubscriptions { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

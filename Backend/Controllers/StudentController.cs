@@ -11,6 +11,27 @@ namespace Librarium.Controllers
     {
         private readonly LibrariumDbContext _db;
         public StudentController(LibrariumDbContext db) { _db = db; }
+        [HttpPost]
+        public IActionResult SavePushSubscription([FromBody] PushSubscriptionRequest sub)
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            if (studentId == null) return Unauthorized();
+
+            // Remove old subscriptions for this student
+            var old = _db.PushSubscriptions.Where(s => s.StudentId == studentId).ToList();
+            _db.PushSubscriptions.RemoveRange(old);
+
+            _db.PushSubscriptions.Add(new PushSubscription
+            {
+                StudentId = studentId.Value,
+                Endpoint = sub.Endpoint,
+                P256dh = sub.P256dh,
+                Auth = sub.Auth,
+                CreatedAt = DateTime.UtcNow
+            });
+            _db.SaveChanges();
+            return Json(new { success = true });
+        }
         public IActionResult Index()
         {
             var studentId = HttpContext.Session.GetInt32("StudentId");
@@ -256,5 +277,11 @@ namespace Librarium.Controllers
         public int ReturnedCount { get; set; }
         public bool HasOverdue { get; set; }
         public List<BorrowRecord> RecentBorrows { get; set; } = new();
+    }
+    public class PushSubscriptionRequest
+    {
+        public string Endpoint { get; set; } = "";
+        public string P256dh { get; set; } = "";
+        public string Auth { get; set; } = "";
     }
 }

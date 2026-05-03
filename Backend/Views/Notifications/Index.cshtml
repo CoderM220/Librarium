@@ -1,0 +1,111 @@
+﻿@model List<Librarium.Models.Notification>
+@{
+    ViewBag.Title = "Notifications";
+    ViewBag.PageName = "Notifications";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+
+    var today = DateTime.Today;
+    var yesterday = DateTime.Today.AddDays(-1);
+
+    var grouped = Model
+        .GroupBy(n =>
+        {
+            if (n.CreatedAt.Date == today) return "Today";
+            if (n.CreatedAt.Date == yesterday) return "Yesterday";
+            return "Earlier";
+        })
+        .OrderBy(g => g.Key == "Today" ? 0 : g.Key == "Yesterday" ? 1 : 2)
+        .ToList();
+
+    var unreadCount = Model.Count(n => !n.IsRead);
+}
+<style>
+    @@media (max-width: 480px) {
+        .notif-icon-circle {
+            width: 30px !important;
+            height: 30px !important;
+            font-size: 13px !important;
+        }
+
+        .notif-card-text p {
+            font-size: 12px !important;
+        }
+    }
+</style>
+
+<div style="max-width:720px;margin:0 auto;padding:0 12px;box-sizing:border-box;width:100%;">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+            <h2 style="margin:0;font-size:18px;font-weight:500;">Notifications</h2>
+            @if (unreadCount > 0)
+            {
+                <span style="font-size:12px;color:#8B5E3C;">@unreadCount unread</span>
+            }
+        </div>
+        @if (unreadCount > 0)
+        {
+            <button onclick="markAllRead()" style="font-size:12px;color:#BA7517;background:none;border:none;cursor:pointer;padding:0;">Mark all as read</button>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div style="text-align:center;padding:60px 20px;color:#aaa;">
+            <div style="font-size:40px;margin-bottom:12px;">🔔</div>
+            <p style="margin:0;font-size:14px;">No notifications yet.</p>
+        </div>
+    }
+
+    @foreach (var group in grouped)
+    {
+        <div style="font-size:11px;font-weight:500;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;">@group.Key</div>
+
+        @foreach (var n in group)
+        {
+            var iconBg = n.Type switch
+            {
+                "booking-approved" => "#EAF3DE",
+                "booking-rejected" => "#FCEBEB",
+                "due-reminder" => "#FAEEDA",
+                "overdue" => "#FCEBEB",
+                _ => "#F5F2EB"
+            };
+            var icon = n.Type switch
+            {
+                "booking-approved" => "✅",
+                "booking-rejected" => "❌",
+                "due-reminder" => "⏰",
+                "overdue" => "⚠️",
+                _ => "🔔"
+            };
+
+            <div style="background:var(--card-bg, #fff);border:0.5px solid var(--border-color, #E0D0B8);border-radius:10px;padding:14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;@(n.IsRead ? "" : "border-left:3px solid #C8832A;background:var(--unread-bg, #FEFBF6);")">
+                <div style="width:36px;height:36px;border-radius:50%;background:@iconBg;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">@icon</div>
+                <div style="flex:1;">
+                    <p style="margin:0 0 2px;font-size:13px;font-weight:500;color:var(--color-text-primary, #2C1810);">@n.Title</p>
+                    <p style="margin:0 0 6px;font-size:12px;color:var(--color-text-secondary, #6B5744);line-height:1.5;">@n.Message</p>
+                    <span style="font-size:11px;color:#aaa;">@n.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy • h:mm tt")</span>
+                </div>
+                @if (!n.IsRead)
+                {
+                    <div style="width:8px;height:8px;background:#E24B4A;border-radius:50%;margin-top:4px;flex-shrink:0;"></div>
+                }
+            </div>
+        }
+    }
+</div>
+
+<script>
+    function markAllRead() {
+        fetch('/Notifications/MarkAllRead', {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '' }
+        }).then(() => location.reload());
+    }
+    if (document.body.classList.contains('dark')) {
+        document.documentElement.style.setProperty('--card-bg', '#1e1a14');
+        document.documentElement.style.setProperty('--border-color', '#3a2e1e');
+        document.documentElement.style.setProperty('--unread-bg', '#2a2016');
+    }
+</script>

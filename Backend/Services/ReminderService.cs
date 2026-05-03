@@ -45,7 +45,18 @@ namespace Librarium.Services
                         record.DueDate);
                 }
                 catch { }
+
+                db.Notifications.Add(new Notification
+                {
+                    StudentId = record.StudentId,
+                    Title = "Due Date Reminder",
+                    Message = $"'{record.BookTitle}' is due on {record.DueDate:MMM dd, yyyy}. Please return it on time.",
+                    Type = "due-reminder",
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                });
             }
+            await db.SaveChangesAsync();
         }
 
         private async Task CancelExpiredBookings()
