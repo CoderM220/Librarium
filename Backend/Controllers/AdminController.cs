@@ -524,7 +524,7 @@ namespace Librarium.Controllers
             admin.OtpCode = otp;
             admin.OtpExpiry = DateTime.UtcNow.AddMinutes(10);
             _db.SaveChanges();
-            _ = Task.Run(() => _email.SendAdminOtpAsync(email, otp));
+            _ = Task.Run(() => _email.SendOtpAsync(email, otp));
             HttpContext.Session.SetString("AdminResetEmail", email);
             return RedirectToAction("AdminResetVerifyOtp");
         }

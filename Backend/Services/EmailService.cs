@@ -42,5 +42,10 @@ namespace Librarium.Services
         {
             return Task.FromResult(true);
         }
+        public async Task SendAdminOtpAsync(string email, string otp)
+        {
+            await SendOtpAsync(email, otp);
+        }
     }
+
 }
