@@ -42,9 +42,22 @@ namespace Librarium.Services
         // ================= OTP =================
         public async Task SendOtpAsync(string toEmail, string otp)
         {
+            Console.WriteLine("=== EMAIL FUNCTION CALLED ===");
+            Console.WriteLine($"Sending OTP to: {toEmail}");
+
             var client = GetClient();
             var mail = CreateMail(toEmail, "Your Librarium OTP Code", $"Your OTP is: {otp}");
-            await client.SendMailAsync(mail);
+
+            try
+            {
+                await client.SendMailAsync(mail);
+                Console.WriteLine("✅ Email sent successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("❌ EMAIL ERROR: " + ex.Message);
+                throw;
+            }
         }
 
         public async Task SendAdminOtpAsync(string email, string otp)
