@@ -14,12 +14,7 @@
                         <strong>@ViewBag.MaskedEmail</strong>
                     </p>
 
-                    @if (TempData["DebugOtp"] != null)
-                    {
-                        <div style="color:red; font-weight:bold; margin-bottom:10px;">
-                            DEBUG OTP: @TempData["DebugOtp"]
-                        </div>
-                    }
+                   
                     @if (ViewBag.Error != null)
                     {
                         <div class="alert alert-danger">@ViewBag.Error</div>

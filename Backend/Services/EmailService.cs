@@ -1,6 +1,5 @@
-﻿using MailKit.Net.Smtp;
-using MimeKit;
-using Microsoft.Extensions.Configuration;
+﻿using System.Net;
+using System.Net.Mail;
 
 namespace Librarium.Services
 {
@@ -15,150 +14,33 @@ namespace Librarium.Services
 
         public async Task SendOtpAsync(string toEmail, string otp)
         {
-            var fromEmail = _config["EmailSettings:FromEmail"] ?? throw new InvalidOperationException("FromEmail not configured.");
-            var appPassword = _config["EmailSettings:AppPassword"] ?? throw new InvalidOperationException("AppPassword not configured.");
-
-            var message = new MimeMessage();
-            message.From.Add(MailboxAddress.Parse(fromEmail));
-            message.To.Add(MailboxAddress.Parse(toEmail));
-            message.Subject = "Your Librarium OTP Code";
-
-            message.Body = new TextPart("plain")
+            var smtpClient = new SmtpClient(_config["SMTP_HOST"])
             {
-                Text = $"Your OTP code is: {otp}\n\nThis code expires in 10 minutes."
+                Port = int.Parse(_config["SMTP_PORT"]),
+                Credentials = new NetworkCredential(
+                    _config["SMTP_EMAIL"],
+                    _config["SMTP_PASSWORD"]
+                ),
+                EnableSsl = true
             };
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(fromEmail, appPassword);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
-        }
-
-        public async Task SendBookingStatusAsync(string toEmail, string studentName, string bookTitle, string status, string? adminNote)
-        {
-            var fromEmail = _config["EmailSettings:FromEmail"] ?? throw new InvalidOperationException("FromEmail not configured.");
-            var appPassword = _config["EmailSettings:AppPassword"] ?? throw new InvalidOperationException("AppPassword not configured.");
-
-            var isApproved = status == "approved";
-            var message = new MimeMessage();
-            message.From.Add(MailboxAddress.Parse(fromEmail));
-            message.To.Add(MailboxAddress.Parse(toEmail));
-            message.Subject = isApproved
-                ? $"✅ Booking Approved — {bookTitle}"
-                : $"❌ Booking Rejected — {bookTitle}";
-
-            message.Body = new TextPart("plain")
+            var mail = new MailMessage
             {
-                Text = $"Hi {studentName},\n\n" +
-                       (isApproved
-                           ? $"Your booking request for \"{bookTitle}\" has been approved! Please collect the book from the library within 2 days.\n\nYou have 14 days from collection to return it."
-                           : $"Unfortunately your booking request for \"{bookTitle}\" has been rejected.") +
-                       (string.IsNullOrEmpty(adminNote) ? "" : $"\n\nAdmin note: {adminNote}") +
-                       "\n\n— Librarium"
+                From = new MailAddress(_config["SMTP_EMAIL"], "Librarium"),
+                Subject = "Your Librarium OTP Code",
+                Body = $"Your OTP is: {otp}",
+                IsBodyHtml = false
             };
 
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(fromEmail, appPassword);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
+            mail.To.Add(toEmail);
+
+            await smtpClient.SendMailAsync(mail);
         }
 
-        public async Task SendDueReminderAsync(string toEmail, string studentName, string bookTitle, DateTime dueDate)
+        // Disable validation for now
+        public Task<bool> IsEmailRealAsync(string email)
         {
-            var fromEmail = _config["EmailSettings:FromEmail"] ?? throw new InvalidOperationException("FromEmail not configured.");
-            var appPassword = _config["EmailSettings:AppPassword"] ?? throw new InvalidOperationException("AppPassword not configured.");
-
-            var message = new MimeMessage();
-            message.From.Add(MailboxAddress.Parse(fromEmail));
-            message.To.Add(MailboxAddress.Parse(toEmail));
-            message.Subject = $"⏰ Reminder — '{bookTitle}' due in 3 days";
-            message.Body = new TextPart("plain")
-            {
-                Text = $"Hi {studentName},\n\n" +
-                       $"This is a reminder that \"{bookTitle}\" is due on {dueDate:MMM d, yyyy} — just 3 days away!\n\n" +
-                       $"Please return it to the library on time to avoid any issues.\n\n" +
-                       $"If you'd like to request a return, you can do so from your My Borrows page.\n\n" +
-                       "— Librarium"
-            };
-
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(fromEmail, appPassword);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
-        }
-
-        public async Task SendAdminOtpAsync(string toEmail, string otp)
-        {
-            var fromEmail = _config["EmailSettings:AdminEmail"] ?? throw new InvalidOperationException("AdminEmail not configured.");
-            var appPassword = _config["EmailSettings:AdminAppPassword"] ?? throw new InvalidOperationException("AdminAppPassword not configured.");
-
-            var message = new MimeMessage();
-            message.From.Add(MailboxAddress.Parse(fromEmail));
-            message.To.Add(MailboxAddress.Parse(toEmail));
-            message.Subject = "Librarium Admin — Password Reset OTP";
-
-            message.Body = new TextPart("plain")
-            {
-                Text = $"Your admin password reset OTP is: {otp}\n\nThis code expires in 10 minutes.\n\n— Librarium"
-            };
-
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(fromEmail, appPassword);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
-        }
-        public async Task SendBookingExpiredAsync(string toEmail, string studentName, string bookTitle)
-        {
-            var fromEmail = _config["EmailSettings:FromEmail"] ?? throw new InvalidOperationException("FromEmail not configured.");
-            var appPassword = _config["EmailSettings:AppPassword"] ?? throw new InvalidOperationException("AppPassword not configured.");
-
-            var message = new MimeMessage();
-            message.From.Add(MailboxAddress.Parse(fromEmail));
-            message.To.Add(MailboxAddress.Parse(toEmail));
-            message.Subject = $"⏳ Booking Expired — {bookTitle}";
-            message.Body = new TextPart("plain")
-            {
-                Text = $"Hi {studentName},\n\n" +
-                       $"Your booking request for \"{bookTitle}\" has expired because it was not approved within 24 hours.\n\n" +
-                       $"If you're still interested in this book, please visit the library portal and submit a new booking request.\n\n" +
-                       $"— Librarium"
-            };
-
-            using var smtp = new SmtpClient();
-            await smtp.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(fromEmail, appPassword);
-            await smtp.SendAsync(message);
-            await smtp.DisconnectAsync(true);
-        }
-        public async Task<bool> IsEmailRealAsync(string email)
-        {
-            try
-            {
-                using var http = new HttpClient();
-                http.Timeout = TimeSpan.FromSeconds(8);
-
-                var apiKey = _config["EmailValidation:ApiKey"] ?? throw new InvalidOperationException("Email validation API key not configured.");
-                var url = $"https://emailreputation.abstractapi.com/v1/?api_key={apiKey}&email={Uri.EscapeDataString(email)}";
-                var response = await http.GetStringAsync(url);
-
-                var json = System.Text.Json.JsonDocument.Parse(response).RootElement;
-
-                // Correct property paths based on actual API response
-                var status = json.GetProperty("email_deliverability").GetProperty("status").GetString();
-                var isSmtpValid = json.GetProperty("email_deliverability").GetProperty("is_smtp_valid").GetBoolean();
-                var isFormatValid = json.GetProperty("email_deliverability").GetProperty("is_format_valid").GetBoolean();
-                var isDisposable = json.GetProperty("email_quality").GetProperty("is_disposable").GetBoolean();
-
-                return isFormatValid && isSmtpValid && status == "deliverable" && !isDisposable;
-            }
-            catch
-            {
-                return true;
-            }
+            return Task.FromResult(true);
         }
     }
 }

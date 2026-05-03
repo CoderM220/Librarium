@@ -104,7 +104,7 @@ namespace Librarium.Controllers
 
             var otp = new Random().Next(100000, 999999).ToString();
 
-            TempData["DebugOtp"] = otp;
+            
 
             var student = new Student
             {
