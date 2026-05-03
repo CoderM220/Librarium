@@ -1,6 +1,8 @@
 ﻿@{
-    Layout = null; ViewBag.Title = "Register";
+    Layout = null;
+    ViewBag.Title = "Register";
 }
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,6 +11,7 @@
     <title>Librarium — Register</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link href="~/css/librarium-shared.css" rel="stylesheet" />
+
     <style>
         .pw-bar-wrap {
             height: 4px;
@@ -71,67 +74,115 @@
             margin: 0 auto;
         }
     </style>
+
 </head>
 <body>
     <div class="login-screen">
         <div class="login-right">
             <div class="login-form-title">Create Account</div>
             <div class="login-form-sub">Join the library today</div>
-            <div id="matchError" class="login-error">❌ Passwords do not match.</div>
+
+            <div id="matchError" class="login-error" style="display:none;">
+                ❌ Passwords do not match.
+            </div>
+
+            <!-- ✅ FORM -->
             <form method="post" action="/Auth/Register" onsubmit="return validateForm()">
                 @Html.AntiForgeryToken()
+
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                     <div class="form-group">
                         <label class="form-label">First Name</label>
-                        <input class="form-input" name="firstName" placeholder="John" required />
+                        <input class="form-input" name="FirstName" placeholder="John" required />
                     </div>
+
                     <div class="form-group">
                         <label class="form-label">Last Name</label>
-                        <input class="form-input" name="lastName" placeholder="Doe" required />
+                        <input class="form-input" name="LastName" placeholder="Doe" required />
                     </div>
                 </div>
+
                 <div class="form-group">
                     <label class="form-label">Email</label>
-                    <input class="form-input" name="email" type="email" placeholder="your@email.com" required />
-                    @if (ViewBag.Error != null && ViewBag.ErrorField == "email")
-                    {
-                        <div style="color:#7a2020;font-size:12px;margin-top:5px;">❌ @ViewBag.Error</div>
-                    }
+                    <input class="form-input" name="Email" type="email" placeholder="your@email.com" required />
                 </div>
+
                 <div class="form-group">
                     <label class="form-label">Password</label>
                     <div style="position:relative;">
-                        <input class="form-input" name="password" id="regPassword" type="password" placeholder="Min. 8 characters" minlength="8" required style="padding-right:42px;" oninput="checkStrength(this.value)" />
-                        <button type="button" onclick="togglePw('regPassword','regEye')" id="regEye" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--dust);padding:0;line-height:1;">👁️</button>
+                        <input class="form-input"
+                               name="Password"
+                               id="regPassword"
+                               type="password"
+                               placeholder="Min. 8 characters"
+                               minlength="8"
+                               required
+                               style="padding-right:42px;"
+                               oninput="checkStrength(this.value)" />
+
+                        <button type="button"
+                                onclick="togglePw('regPassword','regEye')"
+                                id="regEye"
+                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;">
+                            👁️
+                        </button>
                     </div>
-                    <div class="pw-bar-wrap"><div class="pw-bar-fill" id="pwBar"></div></div>
-                    <div class="pw-label" id="pwLabel" style="color:#b8ac9a;">Enter a password</div>
-                    <div class="pw-rules" id="pwRules">
+
+                    <div class="pw-bar-wrap">
+                        <div class="pw-bar-fill" id="pwBar"></div>
+                    </div>
+
+                    <div class="pw-label" id="pwLabel">Enter a password</div>
+
+                    <div class="pw-rules">
                         <div class="pw-rule" id="rule-len">○ At least 8 characters</div>
                         <div class="pw-rule" id="rule-upper">○ One uppercase letter</div>
                         <div class="pw-rule" id="rule-num">○ One number</div>
                         <div class="pw-rule" id="rule-special">○ One special character</div>
                     </div>
                 </div>
+
                 <div class="form-group">
                     <label class="form-label">Confirm Password</label>
                     <div style="position:relative;">
-                        <input class="form-input" id="confirmPassword" type="password" placeholder="Repeat your password" required style="padding-right:42px;" oninput="checkMatch()" />
-                        <button type="button" onclick="togglePw('confirmPassword','confirmEye')" id="confirmEye" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--dust);padding:0;line-height:1;">👁️</button>
+                        <input class="form-input"
+                               name="ConfirmPassword"
+                               id="confirmPassword"
+                               type="password"
+                               placeholder="Repeat your password"
+                               required
+                               style="padding-right:42px;"
+                               oninput="checkMatch()" />
+
+                        <button type="button"
+                                onclick="togglePw('confirmPassword','confirmEye')"
+                                id="confirmEye"
+                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;">
+                            👁️
+                        </button>
                     </div>
+
                     <div class="match-msg" id="matchMsg"></div>
                 </div>
-                <button type="submit" class="btn-login sage">Create Account →</button>
+
+                <button type="submit" class="btn-login sage">
+                    Create Account →
+                </button>
             </form>
+
             <p style="text-align:center;margin-top:16px;font-size:13px;color:#888;">
-                Already have an account? <a href="/Auth/StudentLogin?direct=1" style="color:var(--blue);">Login here</a>
+                Already have an account?
+                <a href="/Auth/StudentLogin?direct=1">Login here</a>
             </p>
+
         </div>
+
     </div>
     <script>
         function togglePw(inputId, btnId) {
             var input = document.getElementById(inputId);
             var btn = document.getElementById(btnId);
+
             if (input.type === 'password') {
                 input.type = 'text';
                 btn.textContent = '🙈';
@@ -142,14 +193,16 @@
         }
 
         function checkStrength(pw) {
-            var len    = pw.length >= 8;
-            var upper  = /[A-Z]/.test(pw);
-            var num    = /[0-9]/.test(pw);
-            var spec   = /[^A-Za-z0-9]/.test(pw);
-            var score  = [len, upper, num, spec].filter(Boolean).length;
+            var len = pw.length >= 8;
+            var upper = /[A-Z]/.test(pw);
+            var num = /[0-9]/.test(pw);
+            var spec = /[^A-Za-z0-9]/.test(pw);
 
-            var bar   = document.getElementById('pwBar');
+            var score = [len, upper, num, spec].filter(Boolean).length;
+
+            var bar = document.getElementById('pwBar');
             var label = document.getElementById('pwLabel');
+
             var colors = ['', '#7a2020', '#d4860a', '#c8842a', '#4a7a5c'];
             var labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
             var widths = ['0%', '25%', '50%', '75%', '100%'];
@@ -159,25 +212,19 @@
             label.textContent = pw.length === 0 ? 'Enter a password' : labels[score];
             label.style.color = colors[score] || '#b8ac9a';
 
-            setRule('rule-len',     len,    '○ At least 8 characters',      '✅ At least 8 characters');
-            setRule('rule-upper',   upper,  '○ One uppercase letter',        '✅ One uppercase letter');
-            setRule('rule-num',     num,    '○ One number',                  '✅ One number');
-            setRule('rule-special', spec,   '○ One special character',       '✅ One special character');
-
             checkMatch();
         }
 
-        function setRule(id, ok, fail, pass) {
-            var el = document.getElementById(id);
-            el.textContent = ok ? pass : fail;
-            el.className = 'pw-rule' + (ok ? ' ok' : '');
-        }
-
         function checkMatch() {
-            var pw      = document.getElementById('regPassword').value;
+            var pw = document.getElementById('regPassword').value;
             var confirm = document.getElementById('confirmPassword').value;
-            var msg     = document.getElementById('matchMsg');
-            if (confirm.length === 0) { msg.textContent = ''; return; }
+            var msg = document.getElementById('matchMsg');
+
+            if (confirm.length === 0) {
+                msg.textContent = '';
+                return;
+            }
+
             if (pw === confirm) {
                 msg.textContent = '✅ Passwords match';
                 msg.style.color = '#4a7a5c';
@@ -188,13 +235,15 @@
         }
 
         function validateForm() {
-            var pw      = document.getElementById('regPassword').value;
+            var pw = document.getElementById('regPassword').value;
             var confirm = document.getElementById('confirmPassword').value;
-            var err     = document.getElementById('matchError');
+            var err = document.getElementById('matchError');
+
             if (pw !== confirm) {
                 err.style.display = 'block';
                 return false;
             }
+
             err.style.display = 'none';
             return true;
         }

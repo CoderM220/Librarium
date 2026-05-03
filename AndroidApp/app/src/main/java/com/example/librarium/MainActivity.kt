@@ -1,8 +1,8 @@
 package com.example.librarium
 
+import android.annotation.SuppressLint
 import android.os.Bundle
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.webkit.*
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 
@@ -10,14 +10,15 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
 
+    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         webView = findViewById(R.id.webView)
 
+      
         webView.settings.apply {
-            @Suppress("SetJavaScriptEnabled")
             javaScriptEnabled = true
             domStorageEnabled = true
             loadWithOverviewMode = true
@@ -25,24 +26,43 @@ class MainActivity : AppCompatActivity() {
             setSupportZoom(false)
             builtInZoomControls = false
             displayZoomControls = false
-            cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
+            cacheMode = WebSettings.LOAD_NO_CACHE
         }
 
+
         webView.webViewClient = object : WebViewClient() {
+
+            override fun shouldOverrideUrlLoading(
+                view: WebView?,
+                request: WebResourceRequest?
+            ): Boolean {
+                view?.loadUrl(request?.url.toString())
+                return true
+            }
+
             override fun onReceivedError(
-                view: WebView,
-                request: android.webkit.WebResourceRequest,
-                error: android.webkit.WebResourceError
+                view: WebView?,
+                request: WebResourceRequest?,
+                error: WebResourceError?
             ) {
-                if (request.isForMainFrame) {
-                    view.loadData(
-                        "<h2>Cannot connect to server</h2><p>Error: ${error.description}</p><p>URL: ${request.url}</p>",
-                        "text/html", "UTF-8"
+                super.onReceivedError(view, request, error)
+
+                if (request?.isForMainFrame == true) {
+                    view?.loadData(
+                        """
+                        <h2>Cannot connect to server</h2>
+                        <p>Please wait 30–60 seconds and try again.</p>
+                        <p>This may be due to server startup delay.</p>
+                        """.trimIndent(),
+                        "text/html",
+                        "UTF-8"
                     )
                 }
             }
         }
-        webView.loadUrl("https://10.43.216.250:5059/Auth/StudentLogin")
+
+
+        webView.loadUrl("https://librarium-74fc.onrender.com/Auth/StudentLogin")
 
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
