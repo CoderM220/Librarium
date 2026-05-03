@@ -94,17 +94,7 @@ namespace Librarium.Controllers
                 return View();
             }
 
-            var emailIsReal = await _email.IsEmailRealAsync(model.Email);
-            if (!emailIsReal)
-            {
-                ViewBag.Error = "Invalid or non-existent email address.";
-                ViewBag.ErrorField = "email";
-                return View();
-            }
-
             var otp = new Random().Next(100000, 999999).ToString();
-
-            
 
             var student = new Student
             {
