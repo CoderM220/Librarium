@@ -1,5 +1,3 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Librarium.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,12 +6,10 @@ namespace Librarium.Services
     public class ReminderService : BackgroundService
     {
         private readonly IServiceProvider _services;
-        private readonly EmailService _email;
 
-        public ReminderService(IServiceProvider services, EmailService email)
+        public ReminderService(IServiceProvider services)
         {
             _services = services;
-            _email = email;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -30,6 +26,7 @@ namespace Librarium.Services
         {
             using var scope = _services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<LibrariumDbContext>();
+            var _email = scope.ServiceProvider.GetRequiredService<EmailService>();
             var targetDate = DateTime.Today.AddDays(3);
             var dueSoon = db.BorrowRecords
                 .Where(r => r.Status == "active" && r.DueDate.Date == targetDate)
@@ -63,6 +60,7 @@ namespace Librarium.Services
         {
             using var scope = _services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<LibrariumDbContext>();
+            var _email = scope.ServiceProvider.GetRequiredService<EmailService>();
             var cutoff = DateTime.UtcNow.AddHours(-24);
             var expired = db.BookingRequests
                 .Where(r => r.Status == "pending" && r.RequestedAt <= cutoff)

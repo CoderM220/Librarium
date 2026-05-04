@@ -1,9 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Librarium.Filters;
 using Librarium.Models;
+using Librarium.Filters;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Linq;
 namespace Librarium.Controllers
 {
     [StudentAuthorize]
@@ -11,6 +9,7 @@ namespace Librarium.Controllers
     {
         private readonly LibrariumDbContext _db;
         public StudentController(LibrariumDbContext db) { _db = db; }
+
         [HttpPost]
         public IActionResult SavePushSubscription([FromBody] PushSubscriptionRequest sub)
         {
@@ -32,6 +31,7 @@ namespace Librarium.Controllers
             _db.SaveChanges();
             return Json(new { success = true });
         }
+
         public IActionResult Index()
         {
             var studentId = HttpContext.Session.GetInt32("StudentId");
@@ -46,6 +46,7 @@ namespace Librarium.Controllers
             };
             return View(vm);
         }
+
         public IActionResult Books(string search = "", string genre = "")
         {
             var studentId = HttpContext.Session.GetInt32("StudentId");
@@ -60,18 +61,20 @@ namespace Librarium.Controllers
 
             // Pass pending booking IDs so view can disable buttons
             ViewBag.PendingBookIds = _db.BookingRequests
-    .Where(r => r.StudentId == studentId && r.Status == "pending")
-    .Select(r => r.BookId)
-    .Where(id => id != null)
-    .Select(id => id!.Value)
-    .ToList();
+               .Where(r => r.StudentId == studentId && r.Status == "pending")
+               .Select(r => r.BookId)
+               .Where(id => id != null)
+               .Select(id => id!.Value)
+               .ToList();
             return View(q.OrderBy(b => b.Title).ToList());
         }
+
         public IActionResult MyBorrows()
         {
             var studentId = HttpContext.Session.GetInt32("StudentId");
             return View(_db.BorrowRecords.Where(r => r.StudentId == studentId).OrderByDescending(r => r.IssuedDate).ToList());
         }
+
         [HttpPost]
         public IActionResult RequestBooking(int bookId)
         {
@@ -105,6 +108,7 @@ namespace Librarium.Controllers
 
             return Json(new { success = true, message = $"Request for '{book.Title}' submitted! Waiting for admin approval." });
         }
+
         [HttpPost]
         public IActionResult RequestReturn(int borrowRecordId)
         {
@@ -136,6 +140,7 @@ namespace Librarium.Controllers
                 return Json(new { success = false, message = "Error: " + ex.Message });
             }
         }
+
         // GET - My Booking Requests
         public IActionResult MyBookings()
         {
@@ -146,6 +151,7 @@ namespace Librarium.Controllers
                 .ToList();
             return View(bookings);
         }
+
         [HttpPost]
         public IActionResult RequestBorrow(int bookId)
         {
@@ -173,6 +179,7 @@ namespace Librarium.Controllers
             _db.SaveChanges();
             return Json(new { success = true, message = $"'{book.Title}' borrowed! Due {record.DueDate:MMM d, yyyy}" });
         }
+
         public IActionResult Profile()
         {
             var studentId = HttpContext.Session.GetInt32("StudentId");
@@ -184,6 +191,7 @@ namespace Librarium.Controllers
             ViewBag.MyBookings = myBookings;
             return View(_db.Students.Find(studentId));
         }
+
         // ── SHELVES (view only) ──
         public IActionResult Shelves()
         {
@@ -248,6 +256,7 @@ namespace Librarium.Controllers
                 ShelfType = b.Shelf != null ? b.Shelf.ShelfType : (string?)null
             });
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult ChangePassword(string firstName, string lastName, string currentPassword, string newPassword, string confirmPassword)
@@ -269,7 +278,7 @@ namespace Librarium.Controllers
             return RedirectToAction("Profile");
         }
 
-    }  // ← closing brace of StudentController
+    }
     public class StudentDashboardViewModel
     {
         public Student Student { get; set; } = new();
@@ -277,11 +286,5 @@ namespace Librarium.Controllers
         public int ReturnedCount { get; set; }
         public bool HasOverdue { get; set; }
         public List<BorrowRecord> RecentBorrows { get; set; } = new();
-    }
-    public class PushSubscriptionRequest
-    {
-        public string Endpoint { get; set; } = "";
-        public string P256dh { get; set; } = "";
-        public string Auth { get; set; } = "";
     }
 }

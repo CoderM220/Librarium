@@ -1,4 +1,4 @@
-﻿@using Librarium.Models
+@using Librarium.Models
 @{
     Layout = "~/Views/Shared/_StudentLayout.cshtml";
     ViewBag.Title = "Dashboard";
@@ -52,12 +52,10 @@
                             }
                             else if (r.Status == "overdue")
                             {
-
                                 <span class="badge" style="background:rgba(122,32,32,0.1);color:var(--burgundy);">⚠️ Overdue</span>
                             }
                             else
                             {
-
                                 <span class="badge b-borrow" style="color:@color;">@label</span>
                             }
                         </td>

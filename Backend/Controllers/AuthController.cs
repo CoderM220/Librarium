@@ -1,4 +1,4 @@
-﻿using Librarium.Models;
+using Librarium.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -80,18 +80,20 @@ namespace Librarium.Controllers
         public IActionResult Register() => View();
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterModel model)
         {
             if (!ModelState.IsValid)
             {
-                return Content("Model binding failed");
+                ViewBag.Error = "Invalid input. Please fill all fields correctly.";
+                return View(model);
             }
 
             if (_db.Students.Any(s => s.Email == model.Email))
             {
                 ViewBag.Error = "An account with this email already exists.";
                 ViewBag.ErrorField = "email";
-                return View();
+                return View(model);
             }
 
             var otp = new Random().Next(100000, 999999).ToString();
@@ -103,13 +105,23 @@ namespace Librarium.Controllers
                 Email = model.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password),
                 OtpCode = otp,
-                OtpExpiry = DateTime.UtcNow.AddMinutes(10)
+                OtpExpiry = DateTime.UtcNow.AddMinutes(10),
+                IsVerified = false
             };
 
             _db.Students.Add(student);
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
 
-            _ = Task.Run(() => _email.SendOtpAsync(model.Email, otp));
+            try
+            {
+                await _email.SendOtpAsync(model.Email, otp);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("EMAIL SEND FAILED: " + ex.Message);
+                ViewBag.Error = "Failed to send OTP. Please try again.";
+                return View(model);
+            }
 
             HttpContext.Session.SetInt32("PendingStudentId", student.Id);
 
@@ -146,7 +158,10 @@ namespace Librarium.Controllers
             var student = _db.Students.Find(studentId);
             if (student == null) return RedirectToAction("Register");
 
-            if (student.OtpCode != otp || student.OtpExpiry < DateTime.UtcNow)
+            if (string.IsNullOrEmpty(student.OtpCode) ||
+                student.OtpCode != otp ||
+                student.OtpExpiry == null ||
+                student.OtpExpiry < DateTime.UtcNow)
             {
                 ViewBag.Error = "Invalid or expired OTP.";
                 return View();
@@ -174,5 +189,4 @@ namespace Librarium.Controllers
             return RedirectToAction("StudentLogin");
         }
     }
-
 }

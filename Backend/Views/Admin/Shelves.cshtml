@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Librarium.Models.Shelf>
+@model IEnumerable<Librarium.Models.Shelf>
 @{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewBag.Title = "Shelves";
@@ -173,7 +173,7 @@
         } else {
             document.getElementById('bookList').innerHTML = s.books.map(b => `
                 <div style="padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;"
-                    onclick="viewDetail(${b.id})"
+                    onclick="viewDetail(${b.id})">
                     <div style="font-size:13px;font-weight:500;color:var(--text-primary);">${b.title}</div>
                     <div style="font-size:11px;color:var(--text-muted);">${b.author}</div>
                     <span style="font-size:10px;padding:1px 7px;border-radius:10px;margin-top:3px;display:inline-block;
@@ -186,6 +186,7 @@
     }
 
     renderGrid();
+
     function viewDetail(id) {
     fetch(`/Admin/BookDetail?id=${id}`)
         .then(r => r.json())

@@ -1,4 +1,4 @@
-﻿namespace Librarium.Models
+namespace Librarium.Models
 {
     public class RegisterModel
     {

@@ -1,6 +1,5 @@
 ﻿using WebPush;
 using Librarium.Models;
-using Microsoft.Extensions.Configuration;
 
 namespace Librarium.Services
 {

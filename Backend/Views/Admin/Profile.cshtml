@@ -1,4 +1,4 @@
-﻿@model Librarium.Models.AdminUser
+@model Librarium.Models.AdminUser
 @{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewBag.Title = "Profile";
@@ -336,13 +336,13 @@
                     <span class="pro-arrow" id="chpwArrow">▼</span> Change Password
                 </button>
                 <div class="pro-chpw-section" id="chpwSection">
-                <div class="form-group">
+                  <div class="form-group">
                     <label class="form-label">Current Password</label>
                     <div style="position:relative;">
                         <input class="form-input" id="curPw" name="currentPassword" type="password" placeholder="Enter current password" style="padding-right:42px;" />
                         <button type="button" onclick="togglePw('curPw',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;color:var(--dust);padding:0;">👁️</button>
                     </div>
-                </div>
+                  </div>
                 <div class="form-group">
                     <label class="form-label">New Password</label>
                     <div style="position:relative;">
@@ -359,8 +359,8 @@
                 </div>
                     <a href="/Admin/ForgotPassword" style="font-size:12px;color:var(--amber);display:inline-block;margin-bottom:14px;">Forgot password?</a>
                 </div>
-                    <button type="submit" class="btn btn-primary" style="margin-top:8px;">💾 Save Changes</button>
-                    <button type="button" onclick="toggleEdit()" class="btn btn-outline" style="margin-top:8px;margin-left:8px;">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="margin-top:8px;">💾 Save Changes</button>
+                <button type="button" onclick="toggleEdit()" class="btn btn-outline" style="margin-top:8px;margin-left:8px;">Cancel</button>
             </form>
         </div>
     </div>
@@ -386,31 +386,38 @@
 </div>
 
 <script>
+
     function showTab(name) {
         document.getElementById('pane-info').style.display = name === 'info' ? 'block' : 'none';
         document.getElementById('pane-settings').style.display = name === 'settings' ? 'block' : 'none';
         document.getElementById('tab-info').classList.toggle('on', name === 'info');
         document.getElementById('tab-settings').classList.toggle('on', name === 'settings');
     }
+
     function toggleEdit() {
         document.getElementById('edit-expand').classList.toggle('open');
     }
+
     function toggleChpw() {
         document.getElementById('chpwSection').classList.toggle('open');
         document.getElementById('chpwArrow').classList.toggle('open');
     }
+
     function togglePw(id, btn) {
         var inp = document.getElementById(id);
         inp.type = inp.type === 'password' ? 'text' : 'password';
         btn.textContent = inp.type === 'password' ? '👁️' : '🙈';
     }
+
     function toggleSetting(id) {
         document.getElementById(id).classList.toggle('on');
         document.getElementById(id).classList.toggle('off');
     }
+
     function toggleDark() {
         toggleDarkMode();
     }
+
     @if (TempData["PwError"] != null || TempData["PwSuccess"] != null)
     {
             <text>document.getElementById('edit-expand').classList.add('open');</text>

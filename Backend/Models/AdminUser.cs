@@ -20,7 +20,7 @@ namespace Librarium.Models
         [StringLength(100)]
         public string DisplayName { get; set; } = "";
 
-        [StringLength(200)]
+        [StringLength(254)]
         public string Email { get; set; } = "";
         public string? OtpCode { get; set; }
         public DateTime? OtpExpiry { get; set; }

@@ -1,4 +1,4 @@
-﻿@model Librarium.Models.Student
+@model Librarium.Models.Student
 @{
     Layout = "~/Views/Shared/_StudentLayout.cshtml";
     ViewBag.Title = "Profile";
@@ -398,30 +398,36 @@
 </div>
 
 <script>
+
     function showTab(name) {
         document.getElementById('pane-info').style.display = name === 'info' ? 'block' : 'none';
         document.getElementById('pane-settings').style.display = name === 'settings' ? 'block' : 'none';
         document.getElementById('tab-info').classList.toggle('on', name === 'info');
         document.getElementById('tab-settings').classList.toggle('on', name === 'settings');
     }
+
     function toggleEdit() {
         document.getElementById('edit-expand').classList.toggle('open');
     }
+
     function toggleChpw() {
         document.getElementById('chpwSection').classList.toggle('open');
         document.getElementById('chpwArrow').classList.toggle('open');
     }
+
     function togglePw(id, btn) {
         var inp = document.getElementById(id);
         inp.type = inp.type === 'password' ? 'text' : 'password';
         btn.textContent = inp.type === 'password' ? '👁️' : '🙈';
     }
-       function toggleSetting(id) {
+
+    function toggleSetting(id) {
         const el = document.getElementById(id);
         el.classList.toggle('on');
         el.classList.toggle('off');
         if (id === 'darkToggle') toggleDarkMode();
     }
+
     @if (TempData["PwError"] != null || TempData["PwSuccess"] != null)
     {
             <text>document.getElementById('edit-expand').classList.add('open');</text>

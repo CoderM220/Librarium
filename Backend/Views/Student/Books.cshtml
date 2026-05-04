@@ -1,4 +1,4 @@
-﻿@model List<Librarium.Models.Book>
+@model List<Librarium.Models.Book>
 @{
     Layout = "~/Views/Shared/_StudentLayout.cshtml";
     ViewBag.Title = "Books";
@@ -335,15 +335,15 @@
             });
     }
 
-            function requestBookFromModal(bookId, title) {
-        fetch('/Student/RequestBooking', {
+    function requestBookFromModal(bookId, title) {
+          fetch('/Student/RequestBooking', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? ''
             },
             body: 'bookId=' + bookId
-        })
+          })
         .then(r => r.json())
         .then(data => {
             if (data.expired) { window.location.href = '/Auth/StudentLogin?direct=1'; return; }
@@ -372,18 +372,17 @@
     document.getElementById('detailModal').addEventListener('click', function(e) {
         if (e.target === this) closeModal();
     });
-
-             function requestBook(bookId, title) {
-        fetch('/Student/RequestBooking', {
+    function requestBook(bookId, title) {
+         fetch('/Student/RequestBooking', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? ''
             },
             body: 'bookId=' + bookId
-        })
-        .then(r => r.json())
-        .then(data => {
+         })
+         .then(r => r.json())
+         .then(data => {
             if (data.expired) { window.location.href = '/Auth/StudentLogin?direct=1'; return; }
            showToast(data.success ? data.message + ' (expires in 24 hrs)' : data.message, data.success);
             if (data.success || data.message.includes('already have a pending request')) {

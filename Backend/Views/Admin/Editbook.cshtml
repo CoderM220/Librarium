@@ -27,7 +27,7 @@
                 <input class="form-input" name="Genre" value="@Model.Genre" />
             </div>
             <div class="form-group">
-                <label class="form-label">ISBN</label><input
+                <label class="form-label">ISBN</label></input>
                 <input class="form-input" id="isbnInput" name="ISBN" value="@Model.ISBN" />
                 <input type="hidden" id="CoverUrl" name="CoverUrl" value="@Model.CoverUrl" />
                 <img id="coverPreview" src="@Model.CoverUrl" alt="Cover"
@@ -76,5 +76,5 @@
             <a href="/Admin/Books" class="btn btn-outline">Cancel</a>
         </div>
     </form>
-    <script src="~/js/addbook.js"></script>
 </div>
+<script src="~/js/addbook.js"></script>

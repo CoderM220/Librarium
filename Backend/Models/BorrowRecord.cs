@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Librarium.Models
@@ -26,7 +25,7 @@ namespace Librarium.Models
         public DateTime DueDate { get; set; }
         public DateTime? ReturnedDate { get; set; }
 
-        // "active", "overdue", or "returned"
+        // TODO: Replace with enum (e.g. BorrowStatus.Active / Overdue / Returned)
         [StringLength(20)]
         public string Status { get; set; } = "active";
 

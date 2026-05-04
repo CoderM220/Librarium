@@ -15,10 +15,10 @@ namespace Librarium.Models
             {
                 context.AdminUsers.Add(new AdminUser
                 {
-                    Username = "admin",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                    Username = "librarium_admin",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("YourStrongPassword@2026"),
                     DisplayName = "Admin",
-                    Email = "admin@librarium.com"
+                    Email = "adminlibrarium@gmail.com"
                 });
                 context.SaveChanges();
             }

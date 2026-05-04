@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Librarium.Models.Shelf>
+@model IEnumerable<Librarium.Models.Shelf>
 @{
     Layout = "~/Views/Shared/_StudentLayout.cshtml";
     ViewBag.Title = "Shelves";
@@ -128,9 +128,9 @@
         const grid = document.getElementById('floorGrid');
         grid.innerHTML = '';
 
-       grid.style.gridTemplateColumns = 'repeat(10,1fr)';
-       grid.style.gridTemplateRows = 'repeat(10,40px)';
-       grid.style.gridAutoRows = '';
+        grid.style.gridTemplateColumns = 'repeat(10,1fr)';
+        grid.style.gridTemplateRows = 'repeat(10,40px)';
+        grid.style.gridAutoRows = '';
 
         shelves.forEach(s => {
             const hasBooks = s.books && s.books.length > 0;

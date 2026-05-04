@@ -1,22 +1,4 @@
-﻿/*using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-namespace Librarium.Models
-{
-    public class LibrariumDbContext : DbContext
-    {
-        public LibrariumDbContext(DbContextOptions<LibrariumDbContext> options)
-            : base(options)
-        {
-        }
-        public DbSet<Book> Books { get; set; }
-        public DbSet<Student> Students { get; set; }
-        public DbSet<BorrowRecord> BorrowRecords { get; set; }
-        public DbSet<AdminUser> AdminUsers { get; set; }
-        public DbSet<BookingRequest> BookingRequests { get; set; }
-    }
-}
-*/
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Librarium.Models
 {

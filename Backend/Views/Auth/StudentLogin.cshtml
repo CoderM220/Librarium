@@ -306,7 +306,7 @@
                 cursor: pointer;
             }
           @if (ViewBag.Error != null || TempData["ShowLogin"] != null || Context.Request.Query["direct"] == "1")
-           {
+          {
             <text>
                  #loadingScreen { display: none !important; }
                  #introScreen { display: none !important; }
@@ -396,7 +396,7 @@
             }, 700);
         }
 
-                window.addEventListener('load', function () {
+            window.addEventListener('load', function () {
             // Restore remembered email
             var savedEmail = localStorage.getItem('rememberedEmail');
             if (savedEmail) {

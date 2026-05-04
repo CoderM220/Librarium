@@ -202,11 +202,12 @@
         document.querySelectorAll('.nav-item').forEach(link => {
             link.addEventListener('click', closeMenu);
         });
+
             function toggleDarkMode() {
-        const on = document.body.classList.toggle('dark');
-        localStorage.setItem('libDarkStudent', on ? '1' : '0');
-        const el = document.getElementById('darkToggle');
-        if (el) { el.classList.toggle('on', on); el.classList.toggle('off', !on); }
+               const on = document.body.classList.toggle('dark');
+               localStorage.setItem('libDarkStudent', on ? '1' : '0');
+               const el = document.getElementById('darkToggle');
+               if (el) { el.classList.toggle('on', on); el.classList.toggle('off', !on); }
         }
     </script>
     <script>

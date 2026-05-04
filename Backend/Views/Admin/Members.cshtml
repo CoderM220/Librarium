@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Librarium.Controllers.MemberViewModel>
+@model IEnumerable<Librarium.Models.MemberViewModel>
 @{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
     ViewBag.Title = "Members";
@@ -42,7 +42,6 @@
                         }
                         else
                         {
-
                             <span style="color:#aaa;font-size:13px;">—</span>
                         }
                     </td>
@@ -53,12 +52,10 @@
                         }
                         else if (m.ActiveBorrows > 0)
                         {
-
                             <span class="badge b-borrow">Borrowing</span>
                         }
                         else
                         {
-
                             <span class="badge b-avail">Active</span>
                         }
                     </td>

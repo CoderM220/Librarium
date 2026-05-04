@@ -12,8 +12,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Librarium — @ViewBag.Title</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link href="~/css/librarium-shared.css" rel="stylesheet" />
-   
+    <link href="~/css/librarium-shared.css" rel="stylesheet" />   
 </head>
 <body>
     <script>if(localStorage.getItem('libDarkAdmin')==='1')document.body.classList.add('dark');</script>
@@ -137,13 +136,13 @@
                 if (window.innerWidth <= 768) closeMenu();
             });
         });
-             // dark mode
+        // dark mode
         function toggleDarkMode() {
-        const on = document.body.classList.toggle('dark');
-        localStorage.setItem('libDarkAdmin', on ? '1' : '0');
-        // sync toggle UI if on profile page
-        const el = document.getElementById('darkToggle');
-        if (el) { el.classList.toggle('on', on); el.classList.toggle('off', !on); }
+           const on = document.body.classList.toggle('dark');
+           localStorage.setItem('libDarkAdmin', on ? '1' : '0');
+           // sync toggle UI if on profile page
+           const el = document.getElementById('darkToggle');
+           if (el) { el.classList.toggle('on', on); el.classList.toggle('off', !on); }
         }
     </script>
 </body>

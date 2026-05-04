@@ -1,4 +1,4 @@
-﻿const isbnInput = document.getElementById('isbnInput');
+const isbnInput = document.getElementById('isbnInput');
 const coverPreview = document.getElementById('coverPreview');
 
 if (isbnInput) {
@@ -35,6 +35,8 @@ if (isbnInput) {
                     if (year) document.querySelector('input[name="Year"]').value = year;
                 }
             }
-        } catch (e) { console.log('Open Library fetch failed', e); }
+        } catch (e) {
+            console.log('Open Library fetch failed', e);
+        }
     });
 }

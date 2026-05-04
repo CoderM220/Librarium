@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Librarium.Filters
@@ -9,7 +10,7 @@ namespace Librarium.Filters
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             var hasAllowAnonymous = context.ActionDescriptor.EndpointMetadata
-                .Any(em => em is Microsoft.AspNetCore.Authorization.AllowAnonymousAttribute);
+                .Any(em => em is AllowAnonymousAttribute);
             if (hasAllowAnonymous) return;
 
             if (context.HttpContext.Session.GetInt32("AdminId") == null)

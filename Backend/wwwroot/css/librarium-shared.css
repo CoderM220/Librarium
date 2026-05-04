@@ -345,7 +345,6 @@ td { padding:13px 22px; font-size:13px; vertical-align:middle; }
     transition: background 0.2s;
 }
     .hamburger.open {
-        /*display: none !important;*/
         display:flex;
     }
     .hamburger:hover {
@@ -398,7 +397,6 @@ td { padding:13px 22px; font-size:13px; vertical-align:middle; }
         display: flex;
     }
         .hamburger.open {
-            /*display: none !important;*/
             display: flex;
         }
     .sidebar {

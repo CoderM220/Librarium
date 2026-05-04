@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Librarium.Models
@@ -21,7 +20,7 @@ namespace Librarium.Models
 
         public DateTime RequestedAt { get; set; } = DateTime.UtcNow;
 
-        // "pending", "approved", "rejected"
+        // TODO: Replace with enum (e.g. BookingStatus.Pending / Approved / Rejected)
         [StringLength(20)]
         public string Status { get; set; } = "pending";
 

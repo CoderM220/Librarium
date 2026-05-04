@@ -340,38 +340,6 @@
         if (e.target === this) closeModal();
     });
 
-    @*// ── DELETE ──
-    function deleteBook(id, title) {
-        if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
-
-        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
-
-        const form = new FormData();
-        form.append('id', id);
-
-        fetch('/Admin/DeleteBook/' + id, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': token },
-            body: form
-        })
-        .then(r => {
-            if (!r.ok) throw new Error('Server returned ' + r.status);
-            return r.json();
-        })
-        .then(data => {
-            if (data.success) {
-                const btn = document.querySelector(`button[onclick*="deleteBook(${id},"]`);
-                if (btn) btn.closest('tr').remove();
-                else location.reload();
-            } else {
-                alert(data.message || 'Could not delete book.');
-            }
-        })
-        .catch(err => {
-            console.error('Delete failed:', err);
-            alert('Delete failed. Check the console for details.');
-        });
-    }*@
         // ── DELETE MODAL ──
     let _deleteId = null;
     let _deleteMax = 0;
@@ -434,14 +402,14 @@
         }
 
            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
-    const form = new FormData();
-    form.append('__RequestVerificationToken', token);   // ← ADD token to body
-    form.append('id', _deleteId);
-    form.append('removeCount', removeCount);
+          const form = new FormData();
+          form.append('__RequestVerificationToken', token);
+          form.append('id', _deleteId);
+          form.append('removeCount', removeCount);
 
-    fetch('/Admin/ReduceCopies', {
-        method: 'POST',
-        body: form   // no headers needed
+          fetch('/Admin/ReduceCopies', {
+            method: 'POST',
+            body: form
     })
         .then(r => {
             if (!r.ok) throw new Error('Server returned ' + r.status);
