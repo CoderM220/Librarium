@@ -124,29 +124,17 @@ namespace Librarium.Controllers
                 ViewBag.Error = "Failed to send OTP. Please try again.";
                 return View(model);
             }
+            return RedirectToAction("VerifyOtp", new { id = student.Id });
 
-            HttpContext.Session.SetInt32("PendingStudentId", student.Id);
-
-            return RedirectToAction("VerifyOtp");
         }
 
         // ================= VERIFY OTP =================
 
-        public IActionResult VerifyOtp()
+        public IActionResult VerifyOtp(int id)
         {
             Console.WriteLine("OTP VERIFY HIT");
 
-            var studentId = HttpContext.Session.GetInt32("PendingStudentId");
-
-            if (studentId == null)
-            {
-                Console.WriteLine("SESSION LOST");
-                return RedirectToAction("Register");
-            }
-
-            Console.WriteLine("SESSION OK");
-
-            var student = _db.Students.Find(studentId);
+            var student = _db.Students.Find(id);
 
             if (student == null)
             {
@@ -160,19 +148,17 @@ namespace Librarium.Controllers
 
             ViewBag.MaskedEmail = masked;
             ViewBag.OtpSentAt = student.OtpExpiry?.AddMinutes(-10);
-
+            ViewBag.StudentId = id;
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult VerifyOtp(string otp)
+        public IActionResult VerifyOtp(int id, string otp)
         {
-            var studentId = HttpContext.Session.GetInt32("PendingStudentId");
-            if (studentId == null) return RedirectToAction("Register");
-
-            var student = _db.Students.Find(studentId);
-            if (student == null) return RedirectToAction("Register");
+            var student = _db.Students.Find(id);
+            if (student == null)
+                return RedirectToAction("Register");
 
             if (string.IsNullOrEmpty(student.OtpCode) ||
                 student.OtpCode != otp ||
@@ -189,7 +175,7 @@ namespace Librarium.Controllers
 
             _db.SaveChanges();
 
-            HttpContext.Session.Remove("PendingStudentId");
+            // ✅ login session (keep this)
             HttpContext.Session.SetInt32("StudentId", student.Id);
             HttpContext.Session.SetString("StudentName", student.FullName);
             HttpContext.Session.SetString("StudentEmail", student.Email);

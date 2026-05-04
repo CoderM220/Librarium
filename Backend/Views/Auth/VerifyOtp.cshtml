@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Verify OTP";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
@@ -29,6 +29,7 @@
 
                     <form method="post" action="/Auth/VerifyOtp">
                         @Html.AntiForgeryToken()
+						<input type="hidden" name="id" value="@ViewBag.StudentId" />
                         <div class="mb-3">
                             <label class="form-label">OTP Code</label>
                             <input type="text" name="otp" class="form-control text-center"
@@ -41,6 +42,7 @@
 
                     <form method="post" action="/Auth/ResendOtp">
                         @Html.AntiForgeryToken()
+						<input type="hidden" name="id" value="@ViewBag.StudentId" />
                         <button type="submit" class="btn btn-outline-secondary w-100"
                                 id="resendBtn" onclick="startCooldown()">
                             Resend OTP
