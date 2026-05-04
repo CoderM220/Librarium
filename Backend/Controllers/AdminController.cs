@@ -463,7 +463,7 @@ namespace Librarium.Controllers
         }
 
         [HttpPost]
-        public IActionResult ApproveBooking(int id, string? adminNote)
+        public async Task<IActionResult> ApproveBooking(int id, string? adminNote)
         {
             var request = _db.BookingRequests.Find(id);
             if (request == null) return NotFound();
@@ -491,10 +491,10 @@ namespace Librarium.Controllers
             request.AdminNote = adminNote;
             _db.BorrowRecords.Add(record);
             _db.SaveChanges();
-            _ = Task.Run(() => _email.SendBookingStatusAsync(
-                request.StudentEmail, request.StudentName, request.BookTitle, "approved", adminNote));
-            _ = Task.Run(() => _push.SendToStudent(
-                request.StudentId, "✅ Booking Approved", $"Your request for '{request.BookTitle}' has been approved! Please collect it within 2 days.", "booking-approved"));
+             await _email.SendBookingStatusAsync(
+                request.StudentEmail, request.StudentName, request.BookTitle, "approved", adminNote);
+            await _push.SendToStudent(
+                request.StudentId, "✅ Booking Approved", $"Your request for '{request.BookTitle}' has been approved! Please collect it within 2 days.", "booking-approved");
             _db.Notifications.Add(new Notification
             {
                 StudentId = request.StudentId,
@@ -509,17 +509,17 @@ namespace Librarium.Controllers
         }
 
         [HttpPost]
-        public IActionResult RejectBooking(int id, string? adminNote)
+        public async Task<IActionResult> RejectBooking(int id, string? adminNote)
         {
             var request = _db.BookingRequests.Find(id);
             if (request == null) return NotFound();
             request.Status = "rejected";
             request.AdminNote = adminNote;
             _db.SaveChanges();
-            _ = Task.Run(() => _email.SendBookingStatusAsync(
-                request.StudentEmail, request.StudentName, request.BookTitle, "rejected", adminNote));
-            _ = Task.Run(() => _push.SendToStudent(
-                request.StudentId, "❌ Booking Rejected", $"Your request for '{request.BookTitle}' was not approved.", "booking-rejected"));
+            await _email.SendBookingStatusAsync(
+                request.StudentEmail, request.StudentName, request.BookTitle, "rejected", adminNote);
+            await _push.SendToStudent(
+                request.StudentId, "❌ Booking Rejected", $"Your request for '{request.BookTitle}' was not approved.", "booking-rejected");
             _db.Notifications.Add(new Notification
             {
                 StudentId = request.StudentId,
@@ -542,7 +542,7 @@ namespace Librarium.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public IActionResult ForgotPassword(string email)
+        public async Task<IActionResult>ForgotPassword(string email)
         {
             var admin = _db.AdminUsers.FirstOrDefault(a => a.Email == email);
             if (admin == null)
@@ -554,7 +554,7 @@ namespace Librarium.Controllers
             admin.OtpCode = otp;
             admin.OtpExpiry = DateTime.UtcNow.AddMinutes(10);
             _db.SaveChanges();
-            _ = Task.Run(() => _email.SendAdminOtpAsync(email, otp));
+           await _email.SendAdminOtpAsync(email, otp);
             HttpContext.Session.SetString("AdminResetEmail", email);
             return RedirectToAction("AdminResetVerifyOtp");
         }

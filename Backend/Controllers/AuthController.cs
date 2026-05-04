@@ -107,7 +107,7 @@ namespace Librarium.Controllers
             _db.Students.Add(student);
             _db.SaveChanges();
 
-            _ = Task.Run(() => _email.SendOtpAsync(model.Email, otp));
+            await _email.SendOtpAsync(model.Email, otp);
 
             HttpContext.Session.SetInt32("PendingStudentId", student.Id);
 
