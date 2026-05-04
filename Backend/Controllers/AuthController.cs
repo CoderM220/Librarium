@@ -82,7 +82,7 @@ namespace Librarium.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Content("Model binding failed");
+                return View(model);
             }
 
             if (_db.Students.Any(s => s.Email == model.Email))
@@ -107,7 +107,21 @@ namespace Librarium.Controllers
             _db.Students.Add(student);
             _db.SaveChanges();
 
-            await _email.SendOtpAsync(model.Email, otp);
+            try
+            {
+                await _email.SendOtpAsync(model.Email, otp);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("EMAIL ERROR: " + ex.Message);
+
+                // Rollback user creation (important)
+                _db.Students.Remove(student);
+                _db.SaveChanges();
+
+                ViewBag.Error = "Failed to send OTP. Please try again.";
+                return View(model);
+            }
 
             HttpContext.Session.SetInt32("PendingStudentId", student.Id);
 
