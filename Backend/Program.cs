@@ -4,25 +4,29 @@ using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ Ensure key folder exists (important for Render)
-Directory.CreateDirectory("/app/keys");
+builder.Services.AddDistributedMemoryCache();
 
-// ✅ Data Protection (fix session cookie error)
-builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo("/app/keys"))
-    .SetApplicationName("LibrariumApp");
 
-// ── DATABASE ──
-builder.Services.AddDbContext<Librarium.Models.LibrariumDbContext>(options =>
-    options.UseSqlite("Data Source=librarium.db"));
-
-// ── SESSION ──
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromHours(2);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
+Directory.CreateDirectory("/app/keys");
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("/app/keys"))
+    .SetApplicationName("LibrariumApp");
+
+
+builder.Services.AddDbContext<Librarium.Models.LibrariumDbContext>(options =>
+    options.UseSqlite("Data Source=librarium.db"));
+
+
 
 // ── SERVICES ──
 builder.Services.AddControllersWithViews();
@@ -39,7 +43,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();

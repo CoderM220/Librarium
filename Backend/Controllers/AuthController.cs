@@ -80,6 +80,8 @@ namespace Librarium.Controllers
         [HttpPost]
         public async Task<IActionResult> Register(RegisterModel model)
         {
+            Console.WriteLine("REGISTER HIT");
+
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -132,11 +134,25 @@ namespace Librarium.Controllers
 
         public IActionResult VerifyOtp()
         {
+            Console.WriteLine("OTP VERIFY HIT");
+
             var studentId = HttpContext.Session.GetInt32("PendingStudentId");
-            if (studentId == null) return RedirectToAction("Register");
+
+            if (studentId == null)
+            {
+                Console.WriteLine("SESSION LOST");
+                return RedirectToAction("Register");
+            }
+
+            Console.WriteLine("SESSION OK");
 
             var student = _db.Students.Find(studentId);
-            if (student == null) return RedirectToAction("Register");
+
+            if (student == null)
+            {
+                Console.WriteLine("STUDENT NOT FOUND");
+                return RedirectToAction("Register");
+            }
 
             var email = student.Email;
             var atIndex = email.IndexOf('@');
