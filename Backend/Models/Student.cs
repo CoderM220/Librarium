@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Librarium.Models
@@ -30,8 +30,10 @@ namespace Librarium.Models
         public string? OtpCode { get; set; }
         public DateTime? OtpExpiry { get; set; }
         public bool IsVerified { get; set; } = false;
+        public int OtpAttempts { get; set; } = 0;
 
         [NotMapped]
         public string FullName => $"{FirstName} {LastName}";
+
     }
 }

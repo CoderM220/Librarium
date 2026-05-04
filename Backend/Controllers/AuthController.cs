@@ -1,6 +1,7 @@
 using Librarium.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 
 namespace Librarium.Controllers
 {
@@ -80,8 +81,7 @@ namespace Librarium.Controllers
         [HttpPost]
         public async Task<IActionResult> Register(RegisterModel model)
         {
-            Console.WriteLine("REGISTER HIT");
-
+            
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -93,8 +93,8 @@ namespace Librarium.Controllers
                 ViewBag.ErrorField = "email";
                 return View();
             }
-
-            var otp = new Random().Next(100000, 999999).ToString();
+           
+            var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
 
             var student = new Student
             {
@@ -117,7 +117,7 @@ namespace Librarium.Controllers
             {
                 Console.WriteLine("EMAIL ERROR: " + ex.Message);
 
-                // Rollback user creation (important)
+                
                 _db.Students.Remove(student);
                 _db.SaveChanges();
 
@@ -132,7 +132,7 @@ namespace Librarium.Controllers
 
         public IActionResult VerifyOtp(int id)
         {
-            Console.WriteLine("OTP VERIFY HIT");
+           
 
             var student = _db.Students.Find(id);
 
@@ -160,30 +160,43 @@ namespace Librarium.Controllers
             if (student == null)
                 return RedirectToAction("Register");
 
-            if (string.IsNullOrEmpty(student.OtpCode) ||
+            
+            ViewBag.StudentId = id;
+
+           
+            if (student.OtpAttempts >= 5)
+            {
+                ViewBag.Error = "Too many attempts. Try again later.";
+                return View();
+            }
+
+           
+            if (string.IsNullOrWhiteSpace(student.OtpCode) ||
                 student.OtpCode != otp ||
                 student.OtpExpiry == null ||
                 student.OtpExpiry < DateTime.UtcNow)
             {
+                student.OtpAttempts++;   
+                _db.SaveChanges();
+
                 ViewBag.Error = "Invalid or expired OTP.";
                 return View();
             }
 
+            
+            student.OtpAttempts = 0;
             student.OtpCode = null;
             student.OtpExpiry = null;
             student.IsVerified = true;
 
             _db.SaveChanges();
 
-            // ✅ login session (keep this)
             HttpContext.Session.SetInt32("StudentId", student.Id);
             HttpContext.Session.SetString("StudentName", student.FullName);
             HttpContext.Session.SetString("StudentEmail", student.Email);
 
             return RedirectToAction("Index", "Student");
         }
-
-        // ================= LOGOUT =================
 
         public IActionResult StudentLogout()
         {
