@@ -15,8 +15,6 @@ namespace Librarium.Controllers
             _email = email;
         }
 
-        // ================= ADMIN LOGIN =================
-
         public IActionResult AdminLogin()
         {
             if (HttpContext.Session.GetInt32("AdminId") != null)
@@ -80,20 +78,18 @@ namespace Librarium.Controllers
         public IActionResult Register() => View();
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterModel model)
         {
             if (!ModelState.IsValid)
             {
-                ViewBag.Error = "Invalid input. Please fill all fields correctly.";
-                return View(model);
+                return Content("Model binding failed");
             }
 
             if (_db.Students.Any(s => s.Email == model.Email))
             {
                 ViewBag.Error = "An account with this email already exists.";
                 ViewBag.ErrorField = "email";
-                return View(model);
+                return View();
             }
 
             var otp = new Random().Next(100000, 999999).ToString();
@@ -105,23 +101,13 @@ namespace Librarium.Controllers
                 Email = model.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password),
                 OtpCode = otp,
-                OtpExpiry = DateTime.UtcNow.AddMinutes(10),
-                IsVerified = false
+                OtpExpiry = DateTime.UtcNow.AddMinutes(10)
             };
 
             _db.Students.Add(student);
-            await _db.SaveChangesAsync();
+            _db.SaveChanges();
 
-            try
-            {
-                await _email.SendOtpAsync(model.Email, otp);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("EMAIL SEND FAILED: " + ex.Message);
-                ViewBag.Error = "Failed to send OTP. Please try again.";
-                return View(model);
-            }
+            _ = Task.Run(() => _email.SendOtpAsync(model.Email, otp));
 
             HttpContext.Session.SetInt32("PendingStudentId", student.Id);
 
