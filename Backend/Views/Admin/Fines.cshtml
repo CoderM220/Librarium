@@ -1,0 +1,58 @@
+@model List<Librarium.Models.Fine>
+@{
+	Layout = "_AdminLayout";
+	ViewBag.Title = "Fines";
+	ViewBag.PageName = "Fines";
+}
+
+<div class="panel">
+	<div class="panel-header">
+		<h2 class="panel-title">💰 Fines</h2>
+		<div class="panel-meta">@Model.Count total fine(s)</div>
+	</div>
+
+	@if (!Model.Any())
+	{
+		<div style="text-align:center;padding:40px;color:var(--text-muted);">No fines issued yet.</div>
+	}
+	else
+	{
+		<table class="data-table">
+			<thead>
+				<tr>
+					<th>Student</th>
+					<th>Book</th>
+					<th>Amount</th>
+					<th>Status</th>
+					<th>Issued</th>
+					<th>Paid</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var f in Model)
+				{
+					<tr>
+						<td>
+							<div style="font-weight:500;">@f.StudentName</div>
+							<div style="font-size:11px;color:var(--text-muted);">@f.StudentEmail</div>
+						</td>
+						<td>@f.BookTitle</td>
+						<td>₹@f.Amount</td>
+						<td>
+							@if (f.Status == "paid")
+							{
+								<span class="badge b-available">✅ Paid</span>
+							}
+							else
+							{
+								<span class="badge b-overdue">⚠️ Unpaid</span>
+							}
+						</td>
+						<td>@f.IssuedAt.ToLocalTime().ToString("MMM dd, yyyy")</td>
+						<td>@(f.PaidAt.HasValue? f.PaidAt.Value.ToLocalTime().ToString("MMM dd, yyyy") : "-")</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+</div>

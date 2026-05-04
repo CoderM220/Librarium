@@ -1,9 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // ── DATABASE ──
 builder.Services.AddDbContext<Librarium.Models.LibrariumDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("LibrariumDb")));
+    options.UseSqlite("Data Source=librarium.db"));
 
 // ── SESSION ──
 builder.Services.AddSession(options =>

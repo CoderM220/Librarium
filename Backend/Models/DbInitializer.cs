@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 
@@ -8,8 +8,14 @@ namespace Librarium.Models
     {
         public static void Initialize(LibrariumDbContext context)
         {
-            context.Database.EnsureCreated();
-
+            try
+            {
+                context.Database.EnsureCreated();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("DB INIT ERROR: " + ex.Message);
+            }
             // ── SEED ADMIN ──
             if (!context.AdminUsers.Any())
             {

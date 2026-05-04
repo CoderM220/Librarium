@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace Librarium.Models
 {
@@ -16,6 +16,7 @@ namespace Librarium.Models
         public DbSet<ReturnRequest> ReturnRequests { get; set; }
         public DbSet<PushSubscription> PushSubscriptions { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Fine> Fines { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

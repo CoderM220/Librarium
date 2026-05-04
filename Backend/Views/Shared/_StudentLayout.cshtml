@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Http
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -111,12 +111,13 @@
             </div>
             <nav class="nav">
                 <span class="nav-label">Overview</span>
-                <a href="/Student/Index" class="nav-item @(ViewBag.PageName == "Dashboard" ? "active" : "")">🏛️ Dashboard</a>
+				<a href="/Student/Index" class="nav-item @(ViewBag.PageName == "Home" ? "active" : "")">🏛️ Home</a>
                 <a href="/Student/Books" class="nav-item @(ViewBag.PageName == "Books" ? "active" : "")">📚 Books</a>
                 <a href="/Student/Shelves" class="nav-item @(ViewBag.PageName == "Shelves" ? "active" : "")">🗂️ Shelves</a>
                 <a href="/Student/MyBorrows" class="nav-item @(ViewBag.PageName == "MyBorrows" ? "active" : "")">📋 My Borrows</a>
                 <a href="/Student/MyBookings" class="nav-item @(ViewBag.PageName == "MyBookings" ? "active" : "")">🗓️ My Bookings</a>
-                <span class="nav-label">Account</span>
+				<a href="/Student/MyFines" class="nav-item @(ViewBag.PageName == "MyFines" ? "active" : "")">💰 My Fines</a>
+				<span class="nav-label">Account</span>
                 <a href="/Student/Profile" class="nav-item @(ViewBag.PageName == "Profile" ? "active" : "")">👤 Profile</a>
             </nav>
             <div class="sidebar-footer">

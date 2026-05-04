@@ -18,6 +18,7 @@ namespace Librarium.Services
             {
                 await SendReminders();
                 await CancelExpiredBookings();
+                await IssueOverdueFines();
                 await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
             }
         }
@@ -79,6 +80,37 @@ namespace Librarium.Services
             }
             if (expired.Any())
                 await db.SaveChangesAsync();
+        }
+        private async Task IssueOverdueFines()
+        {
+            using var scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<LibrariumDbContext>();
+
+            var overdue = db.BorrowRecords
+                .Where(r => r.Status == "active" && r.DueDate < DateTime.Today)
+                .ToList();
+
+            foreach (var record in overdue)
+            {
+                var alreadyFined = db.Fines.Any(f =>
+                    f.BorrowRecordId == record.Id && f.Status != "paid");
+
+                if (alreadyFined) continue;
+
+                db.Fines.Add(new Fine
+                {
+                    StudentId = record.StudentId,
+                    StudentName = record.StudentName,
+                    StudentEmail = record.StudentEmail,
+                    BookTitle = record.BookTitle,
+                    BorrowRecordId = record.Id,
+                    Amount = 50,
+                    Status = "unpaid",
+                    IssuedAt = DateTime.UtcNow
+                });
+            }
+
+            await db.SaveChangesAsync();
         }
     }
 }

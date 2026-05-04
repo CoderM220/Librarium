@@ -17,14 +17,14 @@ namespace Librarium.Migrations
                 name: "AdminUsers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Username = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
-                    DisplayName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(254)", maxLength: 254, nullable: false),
-                    OtpCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    OtpExpiry = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Username = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    PasswordHash = table.Column<string>(type: "TEXT", maxLength: 256, nullable: false),
+                    DisplayName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Email = table.Column<string>(type: "TEXT", maxLength: 254, nullable: false),
+                    OtpCode = table.Column<string>(type: "TEXT", nullable: true),
+                    OtpExpiry = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -32,16 +32,37 @@ namespace Librarium.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Fines",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    StudentId = table.Column<int>(type: "INTEGER", nullable: false),
+                    StudentName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    StudentEmail = table.Column<string>(type: "TEXT", maxLength: 254, nullable: false),
+                    BookTitle = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    BorrowRecordId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    Status = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    IssuedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    PaidAt = table.Column<DateTime>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Fines", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PushSubscriptions",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    StudentId = table.Column<int>(type: "int", nullable: false),
-                    Endpoint = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    P256dh = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Auth = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    StudentId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Endpoint = table.Column<string>(type: "TEXT", nullable: false),
+                    P256dh = table.Column<string>(type: "TEXT", nullable: false),
+                    Auth = table.Column<string>(type: "TEXT", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -52,17 +73,17 @@ namespace Librarium.Migrations
                 name: "ReturnRequests",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    BorrowRecordId = table.Column<int>(type: "int", nullable: false),
-                    StudentId = table.Column<int>(type: "int", nullable: false),
-                    BookId = table.Column<int>(type: "int", nullable: false),
-                    BookTitle = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
-                    StudentName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    StudentEmail = table.Column<string>(type: "nvarchar(254)", maxLength: 254, nullable: false),
-                    RequestedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    AdminNote = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    BorrowRecordId = table.Column<int>(type: "INTEGER", nullable: false),
+                    StudentId = table.Column<int>(type: "INTEGER", nullable: false),
+                    BookId = table.Column<int>(type: "INTEGER", nullable: false),
+                    BookTitle = table.Column<string>(type: "TEXT", maxLength: 300, nullable: false),
+                    StudentName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    StudentEmail = table.Column<string>(type: "TEXT", maxLength: 254, nullable: false),
+                    RequestedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    AdminNote = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -73,12 +94,12 @@ namespace Librarium.Migrations
                 name: "Shelves",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ShelfCode = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    ShelfType = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    GridCol = table.Column<int>(type: "int", nullable: false),
-                    GridRow = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ShelfCode = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
+                    ShelfType = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
+                    GridCol = table.Column<int>(type: "INTEGER", nullable: false),
+                    GridRow = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -89,16 +110,16 @@ namespace Librarium.Migrations
                 name: "Students",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    FirstName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    LastName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(254)", maxLength: 254, nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
-                    RegisteredAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    OtpCode = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    OtpExpiry = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsVerified = table.Column<bool>(type: "bit", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    FirstName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    LastName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    Email = table.Column<string>(type: "TEXT", maxLength: 254, nullable: false),
+                    PasswordHash = table.Column<string>(type: "TEXT", maxLength: 256, nullable: false),
+                    RegisteredAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    OtpCode = table.Column<string>(type: "TEXT", nullable: true),
+                    OtpExpiry = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    IsVerified = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -109,21 +130,21 @@ namespace Librarium.Migrations
                 name: "Books",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Title = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
-                    Author = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Genre = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    ISBN = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Year = table.Column<int>(type: "int", nullable: false),
-                    Copies = table.Column<int>(type: "int", nullable: false),
-                    AvailableCopies = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Emoji = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    CoverUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ShelfId = table.Column<int>(type: "int", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 300, nullable: false),
+                    Author = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Genre = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    ISBN = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    Year = table.Column<int>(type: "INTEGER", nullable: false),
+                    Copies = table.Column<int>(type: "INTEGER", nullable: false),
+                    AvailableCopies = table.Column<int>(type: "INTEGER", nullable: false),
+                    Status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    Emoji = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false),
+                    CoverUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ShelfId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -140,14 +161,14 @@ namespace Librarium.Migrations
                 name: "Notifications",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    StudentId = table.Column<int>(type: "int", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    Type = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    IsRead = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    StudentId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    Message = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    Type = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    IsRead = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -164,16 +185,16 @@ namespace Librarium.Migrations
                 name: "BookingRequests",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    BookId = table.Column<int>(type: "int", nullable: true),
-                    StudentId = table.Column<int>(type: "int", nullable: false),
-                    BookTitle = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
-                    StudentName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    StudentEmail = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    RequestedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    AdminNote = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    BookId = table.Column<int>(type: "INTEGER", nullable: true),
+                    StudentId = table.Column<int>(type: "INTEGER", nullable: false),
+                    BookTitle = table.Column<string>(type: "TEXT", maxLength: 300, nullable: false),
+                    StudentName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    StudentEmail = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    RequestedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    AdminNote = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -195,17 +216,17 @@ namespace Librarium.Migrations
                 name: "BorrowRecords",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    BookId = table.Column<int>(type: "int", nullable: true),
-                    StudentId = table.Column<int>(type: "int", nullable: false),
-                    BookTitle = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
-                    StudentName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    StudentEmail = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    IssuedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    DueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ReturnedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    BookId = table.Column<int>(type: "INTEGER", nullable: true),
+                    StudentId = table.Column<int>(type: "INTEGER", nullable: false),
+                    BookTitle = table.Column<string>(type: "TEXT", maxLength: 300, nullable: false),
+                    StudentName = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    StudentEmail = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    IssuedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    DueDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ReturnedDate = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Status = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -324,6 +345,9 @@ namespace Librarium.Migrations
 
             migrationBuilder.DropTable(
                 name: "BorrowRecords");
+
+            migrationBuilder.DropTable(
+                name: "Fines");
 
             migrationBuilder.DropTable(
                 name: "Notifications");

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Librarium.Models;
 using Librarium.Filters;
 using Microsoft.AspNetCore.Mvc;
@@ -150,6 +150,17 @@ namespace Librarium.Controllers
                 .OrderByDescending(r => r.RequestedAt)
                 .ToList();
             return View(bookings);
+        }
+
+        // ── MY FINES ──
+        public IActionResult MyFines()
+        {
+            var studentId = HttpContext.Session.GetInt32("StudentId");
+            var fines = _db.Fines
+                .Where(f => f.StudentId == studentId)
+                .OrderByDescending(f => f.IssuedAt)
+                .ToList();
+            return View(fines);
         }
 
         [HttpPost]
