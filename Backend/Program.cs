@@ -1,5 +1,16 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
+using System.IO;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// ✅ Ensure key folder exists (important for Render)
+Directory.CreateDirectory("/app/keys");
+
+// ✅ Data Protection (fix session cookie error)
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo("/app/keys"))
+    .SetApplicationName("LibrariumApp");
 
 // ── DATABASE ──
 builder.Services.AddDbContext<Librarium.Models.LibrariumDbContext>(options =>
@@ -13,18 +24,18 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// Add services to the container.
+// ── SERVICES ──
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<Librarium.Services.EmailService>();
-builder.Services.AddHostedService<Librarium.Services.ReminderService>();
 builder.Services.AddScoped<Librarium.Services.PushNotificationService>();
+builder.Services.AddHostedService<Librarium.Services.ReminderService>();
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ── MIDDLEWARE PIPELINE ──
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Auth/AdminLogin");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -32,17 +43,21 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// ✅ Session MUST come before Authorization
 app.UseSession();
+
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Auth}/{action=AdminLogin}/{id?}");
 
-// ── SEED DATABASE ON STARTUP ──
+// ── SEED DATABASE ──
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<Librarium.Models.LibrariumDbContext>();
     Librarium.Models.DbInitializer.Initialize(context);
 }
+
 app.Run();
