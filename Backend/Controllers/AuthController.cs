@@ -197,7 +197,39 @@ namespace Librarium.Controllers
 
             return RedirectToAction("Index", "Student");
         }
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ForgotPassword(string email)
+        {
+            email = email.Trim();
+
+            var student = _db.Students
+                .FirstOrDefault(s => s.Email.ToLower() == email.ToLower());
+
+            if (student == null)
+            {
+                ViewBag.Error = "Email not found";
+                return View();
+            }
+
+            
+            var otp = new Random().Next(100000, 999999).ToString();
+
+            student.OtpCode = otp;
+            student.OtpExpiry = DateTime.UtcNow.AddMinutes(5);
+
+            _db.SaveChanges();
+
+            
+
+            ViewBag.Success = "OTP sent successfully";
+            return View();
+        }
         public IActionResult StudentLogout()
         {
             HttpContext.Session.Clear();
