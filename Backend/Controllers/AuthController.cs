@@ -43,7 +43,7 @@ namespace Librarium.Controllers
             return View();
         }
 
-        // ================= STUDENT LOGIN =================
+      
 
         public IActionResult StudentLogin()
         {
@@ -74,7 +74,7 @@ namespace Librarium.Controllers
             return View();
         }
 
-        // ================= REGISTER =================
+       
 
         public IActionResult Register() => View();
 
@@ -128,7 +128,7 @@ namespace Librarium.Controllers
 
         }
 
-        // ================= VERIFY OTP =================
+       
 
         public IActionResult VerifyOtp(int id)
         {

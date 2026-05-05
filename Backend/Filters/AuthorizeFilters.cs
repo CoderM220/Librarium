@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Librarium.Filters
 {
-    // Protects admin pages
+    
     public class AdminAuthorizeAttribute : ActionFilterAttribute
     {
         public override void OnActionExecuting(ActionExecutingContext context)
@@ -20,7 +20,7 @@ namespace Librarium.Filters
         }
     }
 
-    // Protects student pages
+   
     public class StudentAuthorizeAttribute : ActionFilterAttribute
     {
         public override void OnActionExecuting(ActionExecutingContext context)
