@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Librarium.Migrations
 {
     [DbContext(typeof(LibrariumDbContext))]
-    [Migration("20260504090634_InitialCreate")]
+    [Migration("20260505200258_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -841,6 +841,9 @@ namespace Librarium.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("OtpAttempts")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("OtpCode")
                         .HasColumnType("TEXT");

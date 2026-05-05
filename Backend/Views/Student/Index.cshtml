@@ -2,7 +2,7 @@
 @{
     Layout = "~/Views/Shared/_StudentLayout.cshtml";
     ViewBag.Title = "Dashboard";
-    ViewBag.PageName = "Dashboard";
+    ViewBag.PageName = "Home";
     var vm = Model as Librarium.Controllers.StudentDashboardViewModel;
     var activeBorrows = vm?.RecentBorrows?.Where(r => r.Status == "active" || r.Status == "overdue").ToList() ?? new();
     var recentBorrows = vm?.RecentBorrows ?? new();

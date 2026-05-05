@@ -119,7 +119,8 @@ namespace Librarium.Migrations
                     RegisteredAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     OtpCode = table.Column<string>(type: "TEXT", nullable: true),
                     OtpExpiry = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    IsVerified = table.Column<bool>(type: "INTEGER", nullable: false)
+                    IsVerified = table.Column<bool>(type: "INTEGER", nullable: false),
+                    OtpAttempts = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {

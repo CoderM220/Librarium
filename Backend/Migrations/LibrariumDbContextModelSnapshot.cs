@@ -839,6 +839,9 @@ namespace Librarium.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("OtpAttempts")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("OtpCode")
                         .HasColumnType("TEXT");
 
