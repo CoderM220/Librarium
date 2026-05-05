@@ -20,3 +20,9 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.sidebar {
+    height: 100vh;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
