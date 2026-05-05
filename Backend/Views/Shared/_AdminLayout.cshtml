@@ -111,19 +111,17 @@
 		const hamburgerBtn = document.getElementById('hamburgerBtn');
 		const sidebar = document.querySelector('.sidebar');
 		const overlay = document.getElementById('sidebarOverlay');
-		function openMenu() {
+				function openMenu() {
 			sidebar.classList.add('open');
 			overlay.classList.add('open');
 			hamburgerBtn.classList.add('open');
-			document.body.style.overflow = 'hidden';
+			// Do NOT lock body scroll — main scrolls independently
 		}
 
 		function closeMenu() {
 			sidebar.classList.remove('open');
 			overlay.classList.remove('open');
 			hamburgerBtn.classList.remove('open');
-			document.body.style.overflow = '';
-			document.querySelector('main').style.overflow = '';
 		}
 
 		// Allow main content to scroll even while sidebar is open

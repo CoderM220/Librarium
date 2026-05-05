@@ -25,8 +25,7 @@ builder.Services.AddDataProtection()
 
 
 builder.Services.AddDbContext<Librarium.Models.LibrariumDbContext>(options =>
-    options.UseSqlite("Data Source=C:\\Librarium\\librarium.db"));
-
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // ── SERVICES ──
 builder.Services.AddControllersWithViews();
