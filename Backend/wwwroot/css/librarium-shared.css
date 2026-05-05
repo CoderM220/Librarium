@@ -1541,9 +1541,10 @@ td {
         .sidebar.open {
             transform: translateX(0);
         }
-
     main {
         margin-left: 0 !important;
+        overflow-y: auto;
+        height: 100vh;
     }
 
     .topbar {
@@ -1564,6 +1565,9 @@ td {
 
     .g3 {
         grid-template-columns: 1fr;
+    }
+    .content {
+        padding-bottom: 60px; 
     }
 }
 
@@ -1587,8 +1591,11 @@ html {
             transform: translateX(0);
         }
 
-body:has(.hamburger-always) main {
+body:has(.hamburger-always)
+main {
     margin-left: 0 !important;
+    overflow-y: auto;
+    height: 100vh;
 }
 
 .sc-blue::before {
@@ -1801,4 +1808,14 @@ body.dark {
 
     body.dark ::-webkit-scrollbar-track {
         background: #181410;
+    }
+
+/* ── SIDEBAR OPEN: prevent body scroll on mobile ── */
+body.sidebar-open {
+    overflow: hidden;
+}
+
+    body.sidebar-open .main {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }

@@ -1,6 +1,5 @@
 using Librarium.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Security.Cryptography;
 
@@ -39,7 +38,6 @@ namespace Librarium.Controllers
                 HttpContext.Session.SetInt32("AdminId", admin.Id);
                 HttpContext.Session.SetString("AdminName", admin.DisplayName);
                 HttpContext.Session.SetString("AdminUsername", admin.Username);
-
                 return RedirectToAction("Index", "Admin");
             }
 
@@ -64,27 +62,10 @@ namespace Librarium.Controllers
         {
             var student = _db.Students.FirstOrDefault(s => s.Email == email);
 
-            // FIX: Use a single error message for both "not found" and "wrong password"
-            //      to avoid leaking whether an email is registered.
             if (student == null || !BCrypt.Net.BCrypt.Verify(password, student.PasswordHash))
             {
                 ViewBag.Error = "Incorrect email or password.";
                 return View();
-            }
-
-            if (!student.IsVerified)
-            {
-                // Resend a fresh OTP so the student isn't stuck
-                var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
-                student.OtpCode = otp;
-                student.OtpExpiry = DateTime.UtcNow.AddMinutes(10);
-                student.OtpAttempts = 0;
-                _db.SaveChanges();
-
-                // Fire-and-forget; failure is non-fatal here — student can request resend
-                _ = _email.SendOtpAsync(student.Email, otp);
-
-                return RedirectToAction("VerifyOtp", new { id = student.Id });
             }
 
             HttpContext.Session.SetInt32("StudentId", student.Id);
@@ -96,9 +77,6 @@ namespace Librarium.Controllers
 
         // ─── Register ─────────────────────────────────────────────────────────────
 
-        // FIX: GET must NOT accept or process the model — just show the empty form.
-        //      Previously the GET overload was silently processing model data and
-        //      conflicted with the POST overload's signature.
         [HttpGet]
         public IActionResult Register()
         {
@@ -112,6 +90,7 @@ namespace Librarium.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
+            // Check against already-verified students only
             if (_db.Students.Any(s => s.Email == model.Email))
             {
                 ViewBag.Error = "An account with this email already exists.";
@@ -119,21 +98,22 @@ namespace Librarium.Controllers
                 return View(model);
             }
 
-            // FIX: Use cryptographically secure RNG (was new Random() in parts of the original)
             var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
 
-            var student = new Student
+            // Store registration data in session — do NOT write to DB yet
+            var pending = new PendingRegistration
             {
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 Email = model.Email,
+                // Hash now so plain-text password never sits in session
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password),
                 OtpCode = otp,
-                OtpExpiry = DateTime.UtcNow.AddMinutes(10)
+                OtpExpiry = DateTime.UtcNow.AddMinutes(10),
+                OtpAttempts = 0
             };
 
-            _db.Students.Add(student);
-            _db.SaveChanges();
+            HttpContext.Session.SetString("PendingRegistration", JsonConvert.SerializeObject(pending));
 
             try
             {
@@ -142,86 +122,124 @@ namespace Librarium.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine("EMAIL ERROR: " + ex.Message);
-
-                _db.Students.Remove(student);
-                _db.SaveChanges();
-
+                HttpContext.Session.Remove("PendingRegistration");
                 ViewBag.Error = "Failed to send OTP. Please try again.";
                 return View(model);
             }
 
-            return RedirectToAction("VerifyOtp", new { id = student.Id });
+            return RedirectToAction("VerifyOtp");
         }
 
         // ─── OTP Verification ─────────────────────────────────────────────────────
 
         [HttpGet]
-        public IActionResult VerifyOtp(int id)
+        public IActionResult VerifyOtp()
         {
-            var student = _db.Students.Find(id);
-
-            if (student == null)
+            var json = HttpContext.Session.GetString("PendingRegistration");
+            if (string.IsNullOrEmpty(json))
                 return RedirectToAction("Register");
 
-            // FIX: Don't let an already-verified student re-visit this page
-            if (student.IsVerified)
-                return RedirectToAction("StudentLogin");
+            var pending = JsonConvert.DeserializeObject<PendingRegistration>(json)!;
 
-            var email = student.Email;
-            var atIndex = email.IndexOf('@');
-            var masked = email[..2] + new string('*', atIndex - 2) + email[atIndex..];
-
-            ViewBag.MaskedEmail = masked;
-            ViewBag.OtpSentAt = student.OtpExpiry?.AddMinutes(-10);
-            ViewBag.StudentId = id;
+            SetMaskedEmailViewBag(pending.Email, pending.OtpExpiry);
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult VerifyOtp(int id, string otp)
+        public IActionResult VerifyOtp(string otp)
         {
-            var student = _db.Students.Find(id);
-            if (student == null)
+            var json = HttpContext.Session.GetString("PendingRegistration");
+            if (string.IsNullOrEmpty(json))
                 return RedirectToAction("Register");
 
-            ViewBag.StudentId = id;
+            var pending = JsonConvert.DeserializeObject<PendingRegistration>(json)!;
 
-            if (student.IsVerified)
-                return RedirectToAction("StudentLogin");
-
-            if (student.OtpAttempts >= 5)
+            // Too many attempts — wipe session, force re-register
+            if (pending.OtpAttempts >= 5)
             {
-                ViewBag.Error = "Too many attempts. Try again later.";
-                return View();
+                HttpContext.Session.Remove("PendingRegistration");
+                TempData["Error"] = "Too many failed attempts. Please register again.";
+                return RedirectToAction("Register");
             }
 
             bool isOtpInvalid =
-                string.IsNullOrWhiteSpace(student.OtpCode) ||
-                student.OtpCode != otp ||
-                student.OtpExpiry == null ||
-                student.OtpExpiry < DateTime.UtcNow;
+                string.IsNullOrWhiteSpace(pending.OtpCode) ||
+                pending.OtpCode != otp ||
+                pending.OtpExpiry < DateTime.UtcNow;
 
             if (isOtpInvalid)
             {
-                student.OtpAttempts++;
-                _db.SaveChanges();
+                pending.OtpAttempts++;
+                HttpContext.Session.SetString("PendingRegistration", JsonConvert.SerializeObject(pending));
 
                 ViewBag.Error = "Invalid or expired OTP.";
+                SetMaskedEmailViewBag(pending.Email, pending.OtpExpiry);
                 return View();
             }
 
-            student.OtpAttempts = 0;
-            student.OtpCode = null;
-            student.OtpExpiry = null;
-            student.IsVerified = true;
+            // ✅ OTP verified — NOW create the student in the database
+            // Race-condition guard: check email uniqueness one more time
+            if (_db.Students.Any(s => s.Email == pending.Email))
+            {
+                HttpContext.Session.Remove("PendingRegistration");
+                TempData["Error"] = "An account with this email already exists.";
+                return RedirectToAction("Register");
+            }
+
+            var student = new Student
+            {
+                FirstName = pending.FirstName,
+                LastName = pending.LastName,
+                Email = pending.Email,
+                PasswordHash = pending.PasswordHash,
+                IsVerified = true   // verified at creation, no OTP fields needed on the model
+            };
+
+            _db.Students.Add(student);
             _db.SaveChanges();
 
+            HttpContext.Session.Remove("PendingRegistration");
+
+            // Log the student in immediately after registration
             HttpContext.Session.SetInt32("StudentId", student.Id);
             HttpContext.Session.SetString("StudentName", student.FullName);
             HttpContext.Session.SetString("StudentEmail", student.Email);
 
             return RedirectToAction("Index", "Student");
+        }
+
+        // ─── Resend OTP ───────────────────────────────────────────────────────────
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendOtp()
+        {
+            var json = HttpContext.Session.GetString("PendingRegistration");
+            if (string.IsNullOrEmpty(json))
+                return RedirectToAction("Register");
+
+            var pending = JsonConvert.DeserializeObject<PendingRegistration>(json)!;
+
+            // Fresh OTP + reset attempts
+            pending.OtpCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+            pending.OtpExpiry = DateTime.UtcNow.AddMinutes(10);
+            pending.OtpAttempts = 0;
+
+            HttpContext.Session.SetString("PendingRegistration", JsonConvert.SerializeObject(pending));
+
+            try
+            {
+                await _email.SendOtpAsync(pending.Email, pending.OtpCode);
+                TempData["Success"] = "A new OTP has been sent.";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("EMAIL ERROR: " + ex.Message);
+                TempData["Error"] = "Failed to resend OTP. Please try again.";
+            }
+
+            return RedirectToAction("VerifyOtp");
         }
 
         // ─── Forgot Password ─────────────────────────────────────────────────────
@@ -234,7 +252,7 @@ namespace Librarium.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ForgotPassword(string email)   // FIX: made async
+        public async Task<IActionResult> ForgotPassword(string email)
         {
             email = email.Trim();
 
@@ -247,15 +265,12 @@ namespace Librarium.Controllers
                 return View();
             }
 
-            // FIX 1: Use cryptographically secure RNG (was new Random())
             var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
-
             student.OtpCode = otp;
             student.OtpExpiry = DateTime.UtcNow.AddMinutes(5);
-            student.OtpAttempts = 0;    // reset attempts on fresh OTP
+            student.OtpAttempts = 0;
             _db.SaveChanges();
 
-            // FIX 2: Actually send the OTP email (was missing in original)
             try
             {
                 await _email.SendOtpAsync(student.Email, otp);
@@ -278,5 +293,27 @@ namespace Librarium.Controllers
             HttpContext.Session.Clear();
             return RedirectToAction("StudentLogin");
         }
+
+        // ─── Helpers ──────────────────────────────────────────────────────────────
+
+        private void SetMaskedEmailViewBag(string email, DateTime otpExpiry)
+        {
+            var atIndex = email.IndexOf('@');
+            ViewBag.MaskedEmail = email[..2] + new string('*', atIndex - 2) + email[atIndex..];
+            ViewBag.OtpSentAt = otpExpiry.AddMinutes(-10);
+        }
+    }
+
+    // Temporary model stored in session during registration — never written to DB
+    // until OTP is confirmed. Move to its own file if preferred.
+    public class PendingRegistration
+    {
+        public string FirstName { get; set; } = "";
+        public string LastName { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string PasswordHash { get; set; } = "";
+        public string OtpCode { get; set; } = "";
+        public DateTime OtpExpiry { get; set; }
+        public int OtpAttempts { get; set; }
     }
 }

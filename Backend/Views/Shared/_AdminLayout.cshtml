@@ -89,7 +89,7 @@
 			</div>
 		</aside>
 
-		<main style="flex:1;margin-left:0;">
+		<main style="flex:1;margin-left:0;overflow-y:auto;height:100vh;">
 			<div class="topbar" style="padding-left:68px;">
 				<div class="topbar-title">@ViewBag.PageName</div>
 				@if (TempData["Success"] != null)
@@ -111,7 +111,6 @@
 		const hamburgerBtn = document.getElementById('hamburgerBtn');
 		const sidebar = document.querySelector('.sidebar');
 		const overlay = document.getElementById('sidebarOverlay');
-
 		function openMenu() {
 			sidebar.classList.add('open');
 			overlay.classList.add('open');
@@ -124,7 +123,13 @@
 			overlay.classList.remove('open');
 			hamburgerBtn.classList.remove('open');
 			document.body.style.overflow = '';
+			document.querySelector('main').style.overflow = '';
 		}
+
+		// Allow main content to scroll even while sidebar is open
+		document.querySelector('main').addEventListener('touchmove', (e) => {
+			if (sidebar.classList.contains('open')) e.stopPropagation();
+		}, { passive: true });
 
 		hamburgerBtn.addEventListener('click', () => {
 			sidebar.classList.contains('open') ? closeMenu() : openMenu();
